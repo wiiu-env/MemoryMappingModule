@@ -19,9 +19,12 @@ WUMS_INITIALIZE(){
     ucSetupRequired = 0;
 
     MemoryMapping::setupMemoryMapping();
+    MemoryMapping::CreateHeaps();
 }
 
 int main(int argc, char **argv) {
+    MemoryMapping::DestroyHeaps();
+    MemoryMapping::CreateHeaps();
     return 0;
 }
 

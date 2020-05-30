@@ -347,13 +347,6 @@ void MemoryMapping::setupMemoryMapping() {
     DCFlushRange(pageTableCpy,sizeof(pageTableCpy));
     DEBUG_FUNCTION_LINE("done");
 
-    for(int32_t i = 0; /* waiting for a break */; i++) {
-        if(mem_mapping[i].physical_addresses == NULL) {
-            break;
-        }
-        MEMCreateExpHeapEx((void *) (mem_mapping[i].effective_start_address), mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address, 0);
-    }
-
     //printPageTableTranslation(srTableCpy,pageTableCpy);
 
     //runOnAllCores(readAndPrintSegmentRegister,NULL,0,16,0x80000);
@@ -396,6 +389,30 @@ void MemoryMapping::free(void* ptr){
     }
 }
 
+void MemoryMapping::CreateHeaps() {
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == NULL) {
+            break;
+        }
+        void *address = (void *) (mem_mapping[i].effective_start_address);
+        uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
+        MEMCreateExpHeapEx(address, size, 0);
+        DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", address, size / 1024);
+    }
+}
+
+void MemoryMapping::DestroyHeaps() {
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == NULL) {
+            break;
+        }
+        void *address = (void *) (mem_mapping[i].effective_start_address);
+        uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
+        MEMDestroyExpHeap((MEMHeapHandle) address);
+        memset(address, 0, size);
+        DEBUG_FUNCTION_LINE("Destroyed heap @%08X", address);
+    }
+}
 
 uint32_t MemoryMapping::getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize) {
     sr_table_t srTable;

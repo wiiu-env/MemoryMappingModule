@@ -165,6 +165,10 @@ public:
 
     static void setupMemoryMapping();
 
+    static void CreateHeaps();
+
+    static void DestroyHeaps();
+
     static void printPageTableTranslation(sr_table_t srTable, uint32_t *translation_table);
 
     static void writeTestValuesToMemory();
