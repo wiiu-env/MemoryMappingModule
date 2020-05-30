@@ -376,7 +376,7 @@ void* MemoryMapping::alloc(uint32_t size, uint32_t align){
             DEBUG_FUNCTION_LINE("break %d",i);
             break;
         }
-        res = MEMAllocFromExpHeapEx((MEMHeapHandle) mem_mapping->effective_start_address, size, align);
+        res = MEMAllocFromExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, size, align);
         if (res != NULL) {
             break;
         }
@@ -395,8 +395,8 @@ void MemoryMapping::free(void* ptr){
             DEBUG_FUNCTION_LINE("break %d",i);
             break;
         }
-        if(ptr_val > mem_mapping->effective_start_address && ptr_val < mem_mapping->effective_end_address){
-            MEMFreeToExpHeap((MEMHeapHandle) mem_mapping->effective_start_address, ptr);
+        if(ptr_val > mem_mapping[i].effective_start_address && ptr_val < mem_mapping[i].effective_end_address){
+            MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
             break;
         }
     }
