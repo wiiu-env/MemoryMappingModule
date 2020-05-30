@@ -261,9 +261,9 @@ void MemoryMapping::readTestValuesFromMemory() {
 
 void MemoryMapping::memoryMappingForRegions(const memory_mapping_t * memory_mapping, sr_table_t SRTable, uint32_t * translation_table) {
     for(int32_t i = 0; /* waiting for a break */; i++) {
-        DEBUG_FUNCTION_LINE("In loop %d",i);
+        //DEBUG_FUNCTION_LINE("In loop %d",i);
         if(memory_mapping[i].physical_addresses == NULL) {
-            DEBUG_FUNCTION_LINE("break %d",i);
+            //DEBUG_FUNCTION_LINE("break %d",i);
             break;
         }
         uint32_t cur_ea_start_address = memory_mapping[i].effective_start_address;
@@ -272,11 +272,11 @@ void MemoryMapping::memoryMappingForRegions(const memory_mapping_t * memory_mapp
         const memory_values_t * mem_vals = memory_mapping[i].physical_addresses;
 
         for(uint32_t j = 0;; j++) {
-            DEBUG_FUNCTION_LINE("In inner loop %d",j);
+            //DEBUG_FUNCTION_LINE("In inner loop %d",j);
             uint32_t pa_start_address    = mem_vals[j].start_address;
             uint32_t pa_end_address      = mem_vals[j].end_address;
             if(pa_end_address == 0 && pa_start_address == 0) {
-                DEBUG_FUNCTION_LINE("inner break %d",j);
+                //DEBUG_FUNCTION_LINE("inner break %d",j);
                 // Break if entry was empty.
                 break;
             }
@@ -348,9 +348,7 @@ void MemoryMapping::setupMemoryMapping() {
     DEBUG_FUNCTION_LINE("done");
 
     for(int32_t i = 0; /* waiting for a break */; i++) {
-        DEBUG_FUNCTION_LINE("In loop %d",i);
         if(mem_mapping[i].physical_addresses == NULL) {
-            DEBUG_FUNCTION_LINE("break %d",i);
             break;
         }
         MEMCreateExpHeapEx((void *) (mem_mapping[i].effective_start_address), mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address, 0);
@@ -371,9 +369,7 @@ void MemoryMapping::setupMemoryMapping() {
 void* MemoryMapping::alloc(uint32_t size, uint32_t align){
     void* res = NULL;
     for(int32_t i = 0; /* waiting for a break */; i++) {
-        DEBUG_FUNCTION_LINE("In loop %d",i);
         if(mem_mapping[i].physical_addresses == NULL) {
-            DEBUG_FUNCTION_LINE("break %d",i);
             break;
         }
         res = MEMAllocFromExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, size, align);
@@ -390,9 +386,7 @@ void MemoryMapping::free(void* ptr){
     }
     uint32_t ptr_val = (uint32_t) ptr;
     for(int32_t i = 0; /* waiting for a break */; i++) {
-        DEBUG_FUNCTION_LINE("In loop %d",i);
         if(mem_mapping[i].physical_addresses == NULL) {
-            DEBUG_FUNCTION_LINE("break %d",i);
             break;
         }
         if(ptr_val > mem_mapping[i].effective_start_address && ptr_val < mem_mapping[i].effective_end_address){
@@ -676,7 +670,7 @@ bool MemoryMapping::mapMemory(uint32_t pa_start_address,uint32_t pa_end_address,
             // this group is already taken.
             if ((pteh == 0)) {
                 // If we found a free slot, set the PTEH and PTEL value.
-                DEBUG_FUNCTION_LINE("Used slot %d. PTEGaddr1 %08X addr %08X",j+1,PTEGaddr1 - (HTABORG << 16),PTEGoffset);
+                //DEBUG_FUNCTION_LINE("Used slot %d. PTEGaddr1 %08X addr %08X",j+1,PTEGaddr1 - (HTABORG << 16),PTEGoffset);
                 translation_table[index] = PTEH;
                 translation_table[index+1] = PTEL;
                 setSuccessfully = true;
@@ -688,7 +682,7 @@ bool MemoryMapping::mapMemory(uint32_t pa_start_address,uint32_t pa_end_address,
         }
         // Check if we already found a slot.
         if(!setSuccessfully) {
-            DEBUG_FUNCTION_LINE("-------------- Using second slot -----------------------");
+            //DEBUG_FUNCTION_LINE("-------------- Using second slot -----------------------");
             // We still have a chance to find a slot in the PTEGaddr2 using the complement of the hash.
             // We need to set the H flag in PTEH and use PTEGaddr2.
             // (Not well tested)
