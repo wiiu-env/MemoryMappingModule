@@ -389,6 +389,19 @@ void MemoryMapping::free(void* ptr){
     }
 }
 
+uint32_t MemoryMapping::GetFreeSpace() {
+    uint32_t res = 0;
+    for(int32_t i = 0; /* waiting for a break */; i++) {
+        if(mem_mapping[i].physical_addresses == NULL) {
+            break;
+        }
+        uint32_t curRes = MEMGetTotalFreeSizeForExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address);
+        DEBUG_FUNCTION_LINE("heap at %08X MEMGetTotalFreeSizeForExpHeap: %d KiB",mem_mapping[i].effective_start_address, curRes/1024 );
+        res+=curRes;
+    }
+    return res;
+}
+
 void MemoryMapping::CreateHeaps() {
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == NULL) {

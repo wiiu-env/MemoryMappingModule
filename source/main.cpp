@@ -20,11 +20,14 @@ WUMS_INITIALIZE(){
 
     MemoryMapping::setupMemoryMapping();
     MemoryMapping::CreateHeaps();
+    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping::GetFreeSpace()/1024);
 }
 
 int main(int argc, char **argv) {
+    WHBLogUdpInit();
     MemoryMapping::DestroyHeaps();
     MemoryMapping::CreateHeaps();
+    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping::GetFreeSpace()/1024);
     return 0;
 }
 

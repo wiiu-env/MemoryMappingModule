@@ -165,6 +165,8 @@ public:
 
     static void setupMemoryMapping();
 
+    static uint32_t GetFreeSpace();
+
     static void CreateHeaps();
 
     static void DestroyHeaps();
