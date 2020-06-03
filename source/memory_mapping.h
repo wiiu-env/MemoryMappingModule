@@ -158,51 +158,42 @@ const memory_values_t mem_vals_heap[] = {
         {0,                       0}
 };
 
-class MemoryMapping {
 
-public:
-    static bool isMemoryMapped();
+bool MemoryMapping_isMemoryMapped();
 
-    static void setupMemoryMapping();
+void MemoryMapping_setupMemoryMapping();
 
-    static uint32_t GetFreeSpace();
+uint32_t MemoryMapping_GetFreeSpace();
 
-    static void CreateHeaps();
+void MemoryMapping_CreateHeaps();
 
-    static void DestroyHeaps();
+void MemoryMapping_DestroyHeaps();
 
-    static void printPageTableTranslation(sr_table_t srTable, uint32_t *translation_table);
+void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *translation_table);
 
-    static void writeTestValuesToMemory();
+void MemoryMapping_writeTestValuesToMemory();
 
-    static void readTestValuesFromMemory();
+void MemoryMapping_readTestValuesFromMemory();
 
-    static void searchEmptyMemoryRegions();
+void MemoryMapping_searchEmptyMemoryRegions();
 
-    static void *alloc(uint32_t size, uint32_t align);
+void *MemoryMapping_alloc(uint32_t size, uint32_t align);
 
-    static void free(void *ptr);
+void MemoryMapping_free(void *ptr);
 
-    static uint32_t getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize);
+uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize);
 
-    // Caution when using the result. A chunk of memory in effective address may be split up
-    // into several small chunks inside physical space.
-    static uint32_t PhysicalToEffective(uint32_t phyiscalAddress);
+uint32_t MemoryMapping_PhysicalToEffective(uint32_t phyiscalAddress);
 
-    // Caution when using the result. A chunk of memory in effective address may be split up
-    // into several small chunks inside physical space.
-    static uint32_t EffectiveToPhysical(uint32_t effectiveAddress);
+uint32_t MemoryMapping_EffectiveToPhysical(uint32_t effectiveAddress);
 
-private:
-    static void memoryMappingForRegions(const memory_mapping_t *memory_mapping, sr_table_t SRTable, uint32_t *translation_table);
+void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mapping, sr_table_t SRTable, uint32_t *translation_table);
 
-    static bool mapMemory(uint32_t pa_start_address, uint32_t pa_end_address, uint32_t ea_start_address, sr_table_t SRTable, uint32_t *translation_table);
+bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address, uint32_t ea_start_address, sr_table_t SRTable, uint32_t *translation_table);
 
-    static bool getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_t vsid, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, bool checkSecondHash);
+bool MemoryMapping_getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_t vsid, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, bool checkSecondHash);
 
-    static bool getPageEntryForAddressEx(uint32_t pageMask, uint32_t addr, uint32_t vsid, uint32_t primaryHash, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, uint32_t H);
-};
-
+bool MemoryMapping_getPageEntryForAddressEx(uint32_t pageMask, uint32_t addr, uint32_t vsid, uint32_t primaryHash, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, uint32_t H);
 
 #ifdef __cplusplus
 }

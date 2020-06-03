@@ -54,12 +54,12 @@ void readAndPrintSegmentRegister(CThread *thread, void *arg) {
     DCFlushRange(pageTable, sizeof(pageTable));
     DEBUG_FUNCTION_LINE("Reading pageTable done");
 
-    MemoryMapping::printPageTableTranslation(srTable, pageTable);
+    MemoryMapping_printPageTableTranslation(srTable, pageTable);
 
     DEBUG_FUNCTION_LINE("-----------------------------");
 }
 
-bool MemoryMapping::isMemoryMapped() {
+bool MemoryMapping_isMemoryMapped() {
     sr_table_t srTable;
     memset(&srTable, 0, sizeof(srTable));
 
@@ -70,7 +70,7 @@ bool MemoryMapping::isMemoryMapped() {
     return false;
 }
 
-void MemoryMapping::searchEmptyMemoryRegions() {
+void MemoryMapping_searchEmptyMemoryRegions() {
     DEBUG_FUNCTION_LINE("Searching for empty memory.");
 
     for (int32_t i = 0;; i++) {
@@ -145,7 +145,7 @@ void MemoryMapping::searchEmptyMemoryRegions() {
     DEBUG_FUNCTION_LINE("All tests done.");
 }
 
-void MemoryMapping::writeTestValuesToMemory() {
+void MemoryMapping_writeTestValuesToMemory() {
     //don't smash the stack.
     uint32_t chunk_size = 0x1000;
     uint32_t testBuffer[chunk_size];
@@ -194,7 +194,7 @@ void MemoryMapping::writeTestValuesToMemory() {
     }
 }
 
-void MemoryMapping::readTestValuesFromMemory() {
+void MemoryMapping_readTestValuesFromMemory() {
     DEBUG_FUNCTION_LINE("Testing reading the written values.");
 
     for (int32_t i = 0;; i++) {
@@ -260,7 +260,7 @@ void MemoryMapping::readTestValuesFromMemory() {
     DEBUG_FUNCTION_LINE("All tests done.");
 }
 
-void MemoryMapping::memoryMappingForRegions(const memory_mapping_t *memory_mapping, sr_table_t SRTable, uint32_t *translation_table) {
+void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mapping, sr_table_t SRTable, uint32_t *translation_table) {
     for (int32_t i = 0; /* waiting for a break */; i++) {
         //DEBUG_FUNCTION_LINE("In loop %d",i);
         if (memory_mapping[i].physical_addresses == NULL) {
@@ -283,7 +283,7 @@ void MemoryMapping::memoryMappingForRegions(const memory_mapping_t *memory_mappi
             }
             uint32_t pa_size = pa_end_address - pa_start_address;
             DEBUG_FUNCTION_LINE("Adding page table entry %d for mapping area %d. %08X-%08X => %08X-%08X...", j + 1, i + 1, cur_ea_start_address, memory_mapping[i].effective_start_address + pa_size, pa_start_address, pa_end_address);
-            if (!mapMemory(pa_start_address, pa_end_address, cur_ea_start_address, SRTable, translation_table)) {
+            if (!MemoryMapping_mapMemory(pa_start_address, pa_end_address, cur_ea_start_address, SRTable, translation_table)) {
                 //log_print("error =(");
                 DEBUG_FUNCTION_LINE("Failed to map memory.");
                 //OSFatal("Failed to map memory.");
@@ -296,7 +296,7 @@ void MemoryMapping::memoryMappingForRegions(const memory_mapping_t *memory_mappi
     }
 }
 
-void MemoryMapping::setupMemoryMapping() {
+void MemoryMapping_setupMemoryMapping() {
     // Override all writes to SR8 with nops.
     KernelNOPAtPhysicalAddress(0xFFF1D754);
     KernelNOPAtPhysicalAddress(0xFFF1D64C);
@@ -338,7 +338,7 @@ void MemoryMapping::setupMemoryMapping() {
 
     runOnAllCores(writeSegmentRegister, &srTableCpy);
 
-    memoryMappingForRegions(mem_mapping, srTableCpy, pageTableCpy);
+    MemoryMapping_memoryMappingForRegions(mem_mapping, srTableCpy, pageTableCpy);
 
     //printPageTableTranslation(srTableCpy,pageTableCpy);
 
@@ -360,7 +360,7 @@ void MemoryMapping::setupMemoryMapping() {
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
 }
 
-void *MemoryMapping::alloc(uint32_t size, uint32_t align) {
+void *MemoryMapping_alloc(uint32_t size, uint32_t align) {
     void *res = NULL;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == NULL) {
@@ -374,7 +374,7 @@ void *MemoryMapping::alloc(uint32_t size, uint32_t align) {
     return res;
 }
 
-void MemoryMapping::free(void *ptr) {
+void MemoryMapping_free(void *ptr) {
     if (ptr == NULL) {
         return;
     }
@@ -390,7 +390,7 @@ void MemoryMapping::free(void *ptr) {
     }
 }
 
-uint32_t MemoryMapping::GetFreeSpace() {
+uint32_t MemoryMapping_GetFreeSpace() {
     uint32_t res = 0;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == NULL) {
@@ -403,7 +403,7 @@ uint32_t MemoryMapping::GetFreeSpace() {
     return res;
 }
 
-void MemoryMapping::CreateHeaps() {
+void MemoryMapping_CreateHeaps() {
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == NULL) {
             break;
@@ -415,20 +415,21 @@ void MemoryMapping::CreateHeaps() {
     }
 }
 
-void MemoryMapping::DestroyHeaps() {
+void MemoryMapping_DestroyHeaps() {
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == NULL) {
             break;
         }
         void *address = (void *) (mem_mapping[i].effective_start_address);
         uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
+
         MEMDestroyExpHeap((MEMHeapHandle) address);
         memset(address, 0, size);
         DEBUG_FUNCTION_LINE("Destroyed heap @%08X", address);
     }
 }
 
-uint32_t MemoryMapping::getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize) {
+uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize) {
     sr_table_t srTable;
     uint32_t pageTable[0x8000];
 
@@ -468,7 +469,7 @@ uint32_t MemoryMapping::getAreaSizeFromPageTable(uint32_t start, uint32_t maxSiz
             for (uint32_t addr = cur_address; addr < cur_end_addr; addr += pageSize) {
                 uint32_t PTEH = 0;
                 uint32_t PTEL = 0;
-                if (getPageEntryForAddress(srTable.sdr1, addr, vsid, pageTable, &PTEH, &PTEL, false)) {
+                if (MemoryMapping_getPageEntryForAddress(srTable.sdr1, addr, vsid, pageTable, &PTEH, &PTEL, false)) {
                     memSize += pageSize;
                 } else {
                     success = false;
@@ -483,17 +484,17 @@ uint32_t MemoryMapping::getAreaSizeFromPageTable(uint32_t start, uint32_t maxSiz
     return memSize;
 }
 
-bool MemoryMapping::getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_t vsid, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, bool checkSecondHash) {
+bool MemoryMapping_getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_t vsid, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, bool checkSecondHash) {
     uint32_t pageMask = SDR1 & 0x1FF;
     uint32_t pageIndex = (addr >> PAGE_INDEX_SHIFT) & PAGE_INDEX_MASK;
     uint32_t primaryHash = (vsid & 0x7FFFF) ^pageIndex;
 
-    if (getPageEntryForAddressEx(SDR1, addr, vsid, primaryHash, translation_table, oPTEH, oPTEL, 0)) {
+    if (MemoryMapping_getPageEntryForAddressEx(SDR1, addr, vsid, primaryHash, translation_table, oPTEH, oPTEL, 0)) {
         return true;
     }
 
     if (checkSecondHash) {
-        if (getPageEntryForAddressEx(pageMask, addr, vsid, ~primaryHash, translation_table, oPTEH, oPTEL, 1)) {
+        if (MemoryMapping_getPageEntryForAddressEx(pageMask, addr, vsid, ~primaryHash, translation_table, oPTEH, oPTEL, 1)) {
             return true;
         }
     }
@@ -501,7 +502,7 @@ bool MemoryMapping::getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_
     return false;
 }
 
-bool MemoryMapping::getPageEntryForAddressEx(uint32_t pageMask, uint32_t addr, uint32_t vsid, uint32_t primaryHash, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, uint32_t H) {
+bool MemoryMapping_getPageEntryForAddressEx(uint32_t pageMask, uint32_t addr, uint32_t vsid, uint32_t primaryHash, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, uint32_t H) {
     uint32_t maskedHash = primaryHash & ((pageMask << 10) | 0x3FF);
     uint32_t api = (addr >> 22) & 0x3F;
 
@@ -550,7 +551,7 @@ bool MemoryMapping::getPageEntryForAddressEx(uint32_t pageMask, uint32_t addr, u
     return false;
 }
 
-void MemoryMapping::printPageTableTranslation(sr_table_t srTable, uint32_t *translation_table) {
+void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *translation_table) {
     uint32_t SDR1 = srTable.sdr1;
 
     pageInformation current;
@@ -573,7 +574,7 @@ void MemoryMapping::printPageTableTranslation(sr_table_t srTable, uint32_t *tran
             for (uint32_t addr = segment * 0x10000000; addr < (segment + 1) * 0x10000000; addr += pageSize) {
                 uint32_t PTEH = 0;
                 uint32_t PTEL = 0;
-                if (getPageEntryForAddress(SDR1, addr, vsid, translation_table, &PTEH, &PTEL, false)) {
+                if (MemoryMapping_getPageEntryForAddress(SDR1, addr, vsid, translation_table, &PTEH, &PTEL, false)) {
                     uint32_t pp = PTEL & 3;
                     uint32_t phys = PTEL & 0xFFFFF000;
 
@@ -627,7 +628,7 @@ void MemoryMapping::printPageTableTranslation(sr_table_t srTable, uint32_t *tran
 }
 
 
-bool MemoryMapping::mapMemory(uint32_t pa_start_address, uint32_t pa_end_address, uint32_t ea_start_address, sr_table_t SRTable, uint32_t *translation_table) {
+bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address, uint32_t ea_start_address, sr_table_t SRTable, uint32_t *translation_table) {
     // Based on code from dimok. Thanks!
 
     //uint32_t byteOffsetMask = (1 << PAGE_INDEX_SHIFT) - 1;
@@ -747,7 +748,7 @@ bool MemoryMapping::mapMemory(uint32_t pa_start_address, uint32_t pa_end_address
     return true;
 }
 
-uint32_t MemoryMapping::PhysicalToEffective(uint32_t phyiscalAddress) {
+uint32_t MemoryMapping_PhysicalToEffective(uint32_t phyiscalAddress) {
     if (phyiscalAddress >= 0x30800000 && phyiscalAddress < 0x31000000) {
         return phyiscalAddress - (0x30800000 - 0x00800000);
     }
@@ -780,7 +781,7 @@ uint32_t MemoryMapping::PhysicalToEffective(uint32_t phyiscalAddress) {
     return result;
 }
 
-uint32_t MemoryMapping::EffectiveToPhysical(uint32_t effectiveAddress) {
+uint32_t MemoryMapping_EffectiveToPhysical(uint32_t effectiveAddress) {
     if (effectiveAddress >= 0x00800000 && effectiveAddress < 0x01000000) {
         return effectiveAddress + (0x30800000 - 0x00800000);
     }
@@ -818,3 +819,5 @@ uint32_t MemoryMapping::EffectiveToPhysical(uint32_t effectiveAddress) {
     }
     return result;
 }
+
+

@@ -17,10 +17,9 @@ WUMS_INITIALIZE() {
         return;
     }
     ucSetupRequired = 0;
-
-    MemoryMapping::setupMemoryMapping();
-    MemoryMapping::CreateHeaps();
-    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping::GetFreeSpace() / 1024);
+    MemoryMapping_setupMemoryMapping();
+    MemoryMapping_CreateHeaps();
+    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 }
 
 int main(int argc, char **argv) {
@@ -32,25 +31,26 @@ int main(int argc, char **argv) {
 }
 
 void MemoryMappingFree(void *ptr) {
-    MemoryMapping::free(ptr);
+    //DEBUG_FUNCTION_LINE("[%08X] free", ptr);
+    MemoryMapping_free(ptr);
 }
 
 uint32_t MemoryMappingEffectiveToPhysical(uint32_t address) {
-    return MemoryMapping::EffectiveToPhysical(address);
+    return MemoryMapping_EffectiveToPhysical(address);
 }
 
 uint32_t MemoryMappingPhysicalToEffective(uint32_t address) {
-    return MemoryMapping::PhysicalToEffective(address);
+    return MemoryMapping_PhysicalToEffective(address);
 }
 
 void *MemoryMappingAlloc(uint32_t size) {
-    void *res = MemoryMapping::alloc(size, 0x04);
+    void *res = MemoryMapping_alloc(size, 0x04);
     //DEBUG_FUNCTION_LINE("[res: %08X] alloc %d ", res, size);
     return res;
 }
 
 void *MemoryMappingAllocEx(uint32_t size, uint32_t align) {
-    void *res = MemoryMapping::alloc(size, align);
+    void *res = MemoryMapping_alloc(size, align);
     //DEBUG_FUNCTION_LINE("[res %08X] allocEX %d %d ", res, size, align);
     return res;
 }
