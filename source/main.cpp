@@ -22,12 +22,11 @@ WUMS_INITIALIZE() {
     DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 }
 
-int main(int argc, char **argv) {
+WUMS_APPLICATION_STARTS() {
     WHBLogUdpInit();
-    MemoryMapping::DestroyHeaps();
-    MemoryMapping::CreateHeaps();
-    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping::GetFreeSpace() / 1024);
-    return 0;
+    //MemoryMapping_DestroyHeaps();
+    //MemoryMapping_CreateHeaps();
+    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 }
 
 void MemoryMappingFree(void *ptr) {
