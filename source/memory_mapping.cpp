@@ -410,7 +410,7 @@ void MemoryMapping_CreateHeaps() {
         }
         void *address = (void *) (mem_mapping[i].effective_start_address);
         uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
-        MEMCreateExpHeapEx(address, size, 0);
+        MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
         DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", address, size / 1024);
     }
 }
