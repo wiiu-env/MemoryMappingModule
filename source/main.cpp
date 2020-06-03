@@ -4,6 +4,7 @@
 #include <wums.h>
 #include <whb/log.h>
 #include <whb/log_udp.h>
+#include <coreinit/memexpheap.h>
 #include "memory_mapping.h"
 #include "logger.h"
 
@@ -26,6 +27,21 @@ WUMS_APPLICATION_STARTS() {
     WHBLogUdpInit();
     //MemoryMapping_DestroyHeaps();
     //MemoryMapping_CreateHeaps();
+
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == NULL) {
+            break;
+        }
+        void *address = (void *) (mem_mapping[i].effective_start_address);
+        uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
+
+        MEMExpHeapBlock *curUsedBlock = ((MEMExpHeap *) address)->usedList.head;
+        while (curUsedBlock != 0) {
+            DEBUG_FUNCTION_LINE("[Memory leak info] %08X is still allocated (%d bytes)", &curUsedBlock[1], curUsedBlock->blockSize);
+            curUsedBlock = curUsedBlock->next;
+        }
+    }
+
     DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 }
 
