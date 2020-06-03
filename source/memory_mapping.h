@@ -179,9 +179,9 @@ public:
 
     static void searchEmptyMemoryRegions();
 
-    static void * alloc(uint32_t size, uint32_t align);
+    static void *alloc(uint32_t size, uint32_t align);
 
-    static void free(void * ptr);
+    static void free(void *ptr);
 
     static uint32_t getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize);
 
