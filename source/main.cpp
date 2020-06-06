@@ -33,7 +33,6 @@ WUMS_APPLICATION_STARTS() {
             break;
         }
         void *address = (void *) (mem_mapping[i].effective_start_address);
-        uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
 
         MEMExpHeapBlock *curUsedBlock = ((MEMExpHeap *) address)->usedList.head;
         while (curUsedBlock != 0) {

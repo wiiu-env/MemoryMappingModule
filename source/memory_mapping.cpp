@@ -777,7 +777,6 @@ uint32_t MemoryMapping_PhysicalToEffective(uint32_t phyiscalAddress) {
 
     uint32_t result = 0;
     const memory_values_t *curMemValues = NULL;
-    int32_t curOffset = 0;
     //iterate through all own mapped memory regions
     for (int32_t i = 0; true; i++) {
         if (mem_mapping[i].physical_addresses == NULL) {
