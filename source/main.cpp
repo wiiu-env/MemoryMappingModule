@@ -6,7 +6,9 @@
 #include <whb/log_udp.h>
 #include <coreinit/memexpheap.h>
 #include "memory_mapping.h"
+#include <function_patcher/function_patching.h>
 #include "logger.h"
+#include "function_replacements.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 
@@ -21,6 +23,10 @@ WUMS_INITIALIZE() {
     MemoryMapping_setupMemoryMapping();
     MemoryMapping_CreateHeaps();
     DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
+
+    DEBUG_FUNCTION_LINE("Patch functions");
+    FunctionPatcherPatchFunction(function_replacements, function_replacements_size);
+    DEBUG_FUNCTION_LINE("Patch functions finished");
 }
 
 WUMS_APPLICATION_STARTS() {

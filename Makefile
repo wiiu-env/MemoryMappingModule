@@ -38,7 +38,7 @@ CXXFLAGS	:= $(CFLAGS) -std=c++17
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(WUMSSPECS) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lwums -lwut -lkernel
+LIBS	:= -lwums -lwut -lkernel -lfunctionpatcher
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
