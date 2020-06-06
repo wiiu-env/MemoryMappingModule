@@ -24,6 +24,29 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
     }
 }
 
+void writeKernelNOPs(CThread *thread, void *arg) {
+    uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
+    DEBUG_FUNCTION_LINE("Writing kernel NOPs on core %d\n", core/2);
+
+    KernelNOPAtPhysicalAddress(0xFFF1D754);
+    KernelNOPAtPhysicalAddress(0xFFF1D64C);
+    KernelNOPAtPhysicalAddress(0xFFE00638);
+
+    KernelNOPAtPhysicalAddress(0xfff01db0);
+    KernelNOPAtPhysicalAddress(0xfff01db4);
+    KernelNOPAtPhysicalAddress(0xfff01a00);
+    KernelNOPAtPhysicalAddress(0xfff01a04);
+    KernelNOPAtPhysicalAddress(0xfff01e90);
+    KernelNOPAtPhysicalAddress(0xfff01ea0);
+    KernelNOPAtPhysicalAddress(0xfff01ea4);
+
+    KernelNOPAtPhysicalAddress(0xfff0db24);
+    KernelNOPAtPhysicalAddress(0xfff0dbb4);
+    KernelNOPAtPhysicalAddress(0xfff0dbbc);
+    KernelNOPAtPhysicalAddress(0xfff0dbc8);
+    KernelNOPAtPhysicalAddress(0xfff0dbcc);
+}
+
 void writeSegmentRegister(CThread *thread, void *arg) {
     sr_table_t *table = (sr_table_t *) arg;
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
@@ -298,9 +321,8 @@ void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mappin
 
 void MemoryMapping_setupMemoryMapping() {
     // Override all writes to SR8 with nops.
-    KernelNOPAtPhysicalAddress(0xFFF1D754);
-    KernelNOPAtPhysicalAddress(0xFFF1D64C);
-    KernelNOPAtPhysicalAddress(0xFFE00638);
+    // Override some memory region checks inside the kernel
+    runOnAllCores(writeKernelNOPs,NULL);
 
     //runOnAllCores(readAndPrintSegmentRegister,NULL,0,16,0x80000);
 
