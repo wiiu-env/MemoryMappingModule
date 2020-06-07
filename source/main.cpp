@@ -11,6 +11,7 @@
 #include "function_replacements.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
+WUMS_MODULE_INIT_BEFORE_ENTRYPOINT();
 
 WUMS_INITIALIZE() {
     WHBLogUdpInit();
