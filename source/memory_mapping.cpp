@@ -26,7 +26,7 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
 
 void writeKernelNOPs(CThread *thread, void *arg) {
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
-    DEBUG_FUNCTION_LINE("Writing kernel NOPs on core %d\n", core/2);
+    DEBUG_FUNCTION_LINE("Writing kernel NOPs on core %d", core/2);
 
     KernelNOPAtPhysicalAddress(0xFFF1D754);
     KernelNOPAtPhysicalAddress(0xFFF1D64C);
@@ -50,7 +50,7 @@ void writeKernelNOPs(CThread *thread, void *arg) {
 void writeSegmentRegister(CThread *thread, void *arg) {
     sr_table_t *table = (sr_table_t *) arg;
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
-    DEBUG_FUNCTION_LINE("Writing segment register to core %d\n", core);
+    DEBUG_FUNCTION_LINE("Writing segment register to core %d", core/2);
 
     DCFlushRange(table, sizeof(sr_table_t));
     KernelWriteSRs(table);
@@ -58,7 +58,7 @@ void writeSegmentRegister(CThread *thread, void *arg) {
 
 void readAndPrintSegmentRegister(CThread *thread, void *arg) {
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
-    DEBUG_FUNCTION_LINE("Reading segment register and page table from core %d", core);
+    DEBUG_FUNCTION_LINE("Reading segment register and page table from core %d", core/2);
     sr_table_t srTable;
     memset(&srTable, 0, sizeof(srTable));
 
