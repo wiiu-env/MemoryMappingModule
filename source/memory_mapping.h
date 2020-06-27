@@ -36,6 +36,7 @@ typedef struct _memory_mapping_t {
 #define PAGE_INDEX_MASK             ((1 << (28 - PAGE_INDEX_SHIFT)) - 1)
 
 #define MEMORY_START_BASE               0x80000000
+#define MEMORY_START_VIDEO_BASE         (MEMORY_START_BASE + 0x08000000)
 
 const memory_values_t mem_vals_heap_1[] = {
         {0x28000000 + 0x06620000, 0x28000000 + 0x07F80000}, // size: 25984 kB
@@ -71,15 +72,6 @@ const memory_values_t mem_vals_heap_4[] = {
 
 #define MEMORY_HEAP4 MEMORY_HEAP3 + MEMORY_HEAP3_SIZE
 
-const memory_mapping_t mem_mapping[] = {
-        {MEMORY_HEAP0, MEMORY_HEAP1, mem_vals_heap_1},
-        {MEMORY_HEAP1, MEMORY_HEAP2, mem_vals_heap_2},
-        {MEMORY_HEAP2, MEMORY_HEAP3, mem_vals_heap_3},
-        {MEMORY_HEAP3, MEMORY_HEAP4, mem_vals_heap_4},
-        {0, 0, NULL}
-};
-
-
 const memory_values_t mem_vals_video[] = {
         // The GPU doesn't have access to the 0x28000000 - 0x32000000 area, so we need memory from somewhere else.
         // From the SharedReadHeap of the loader.
@@ -113,6 +105,19 @@ const memory_values_t mem_vals_video[] = {
         //{0x18000000 , 0x18000000 +0x3000000}, // size: 3840 kB
         {0,          0}
 };
+
+#define MEMORY_START_VIDEO          MEMORY_START_VIDEO_BASE
+#define MEMORY_END_VIDEO            MEMORY_START_VIDEO + 0xE60000
+
+const memory_mapping_t mem_mapping[] = {
+        {MEMORY_HEAP0, MEMORY_HEAP1, mem_vals_heap_1},
+        {MEMORY_HEAP1, MEMORY_HEAP2, mem_vals_heap_2},
+        {MEMORY_HEAP2, MEMORY_HEAP3, mem_vals_heap_3},
+        {MEMORY_HEAP3, MEMORY_HEAP4, mem_vals_heap_4},
+        {MEMORY_START_VIDEO, MEMORY_END_VIDEO, mem_vals_video},
+        {0, 0, NULL}
+};
+
 
 // Values needs to be aligned to 0x20000 and size needs to be a multiple of 0x20000
 const memory_values_t mem_vals_heap[] = {
@@ -178,6 +183,8 @@ void MemoryMapping_readTestValuesFromMemory();
 void MemoryMapping_searchEmptyMemoryRegions();
 
 void *MemoryMapping_alloc(uint32_t size, uint32_t align);
+
+void *MemoryMapping_allocVideoMemory(uint32_t size, uint32_t align);
 
 void MemoryMapping_free(void *ptr);
 

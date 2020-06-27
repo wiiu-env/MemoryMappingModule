@@ -76,8 +76,15 @@ void *MemoryMappingAllocEx(uint32_t size, uint32_t align) {
     return res;
 }
 
+void *MemoryMappingAllocForGX2Ex(uint32_t size, uint32_t align) {
+    void *res = MemoryMapping_allocVideoMemory(size, align);
+    //DEBUG_FUNCTION_LINE("[res %08X] allocEX %d %d ", res, size, align);
+    return res;
+}
+
 uint32_t MEMAllocFromMappedMemory __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingAlloc;
 uint32_t MEMAllocFromMappedMemoryEx __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingAllocEx;
+uint32_t MEMAllocFromMappedMemoryForGX2Ex __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingAllocForGX2Ex;
 uint32_t MEMFreeToMappedMemory __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingFree;
 
 WUMS_EXPORT_FUNCTION(MemoryMappingEffectiveToPhysical);
@@ -85,4 +92,5 @@ WUMS_EXPORT_FUNCTION(MemoryMappingPhysicalToEffective);
 
 WUMS_EXPORT_DATA(MEMAllocFromMappedMemory);
 WUMS_EXPORT_DATA(MEMAllocFromMappedMemoryEx);
+WUMS_EXPORT_DATA(MEMAllocFromMappedMemoryForGX2Ex);
 WUMS_EXPORT_DATA(MEMFreeToMappedMemory);

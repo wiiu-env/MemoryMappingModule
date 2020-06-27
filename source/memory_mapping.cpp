@@ -396,6 +396,27 @@ void *MemoryMapping_alloc(uint32_t size, uint32_t align) {
     return res;
 }
 
+void *MemoryMapping_allocVideoMemory(uint32_t size, uint32_t align) {
+    void *res = NULL;
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == NULL) {
+            break;
+        }
+        uint32_t effectiveAddress = mem_mapping[i].effective_start_address;
+
+        // Skip non-video memory
+        if(effectiveAddress < MEMORY_START_VIDEO || effectiveAddress > MEMORY_END_VIDEO){
+            continue;
+        }
+        res = MEMAllocFromExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, size, align);
+        if (res != NULL) {
+            break;
+        }
+    }
+    return res;
+}
+
+
 void MemoryMapping_free(void *ptr) {
     if (ptr == NULL) {
         return;
