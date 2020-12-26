@@ -11,7 +11,8 @@
 #include "function_replacements.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
-WUMS_MODULE_INIT_BEFORE_ENTRYPOINT();
+WUMS_MODULE_SKIP_ENTRYPOINT();
+WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 
 WUMS_INITIALIZE() {
     WHBLogUdpInit();
@@ -42,7 +43,7 @@ WUMS_APPLICATION_STARTS() {
         void *address = (void *) (mem_mapping[i].effective_start_address);
 
         MEMExpHeapBlock *curUsedBlock = ((MEMExpHeap *) address)->usedList.head;
-        while (curUsedBlock != 0) {
+        while (curUsedBlock != nullptr) {
             DEBUG_FUNCTION_LINE("[Memory leak info] %08X is still allocated (%d bytes)", &curUsedBlock[1], curUsedBlock->blockSize);
             curUsedBlock = curUsedBlock->next;
         }
