@@ -388,8 +388,22 @@ void *MemoryMapping_alloc(uint32_t size, uint32_t align) {
         if (mem_mapping[i].physical_addresses == NULL) {
             break;
         }
-        res = MEMAllocFromExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, size, align);
-        if (res != NULL) {
+        MEMHeapHandle heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
+        MEMExpHeap *heap = (MEMExpHeap *) heapHandle;
+        OSUninterruptibleSpinLock_Acquire(&heap->header.lock);
+        res = MEMAllocFromExpHeapEx(heapHandle, size, align);
+        auto cur = heap->usedList.head;
+        while (cur != nullptr) {
+            DCFlushRange(cur, sizeof(MEMExpHeapBlock));
+            cur = cur->next;
+        }
+        cur = heap->freeList.head;
+        while (cur != nullptr) {
+            DCFlushRange(cur, sizeof(MEMExpHeapBlock));
+            cur = cur->next;
+        }
+        OSUninterruptibleSpinLock_Release(&heap->header.lock);
+        if (res != nullptr) {
             break;
         }
     }
@@ -427,7 +441,21 @@ void MemoryMapping_free(void *ptr) {
             break;
         }
         if (ptr_val > mem_mapping[i].effective_start_address && ptr_val < mem_mapping[i].effective_end_address) {
+            MEMHeapHandle heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
+            MEMExpHeap *heap = (MEMExpHeap *) heapHandle;
+            OSUninterruptibleSpinLock_Acquire(&heap->header.lock);
             MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
+            auto cur = heap->usedList.head;
+            while (cur != nullptr) {
+                DCFlushRange(cur, sizeof(MEMExpHeapBlock));
+                cur = cur->next;
+            }
+            cur = heap->freeList.head;
+            while (cur != nullptr) {
+                DCFlushRange(cur, sizeof(MEMExpHeapBlock));
+                cur = cur->next;
+            }
+            OSUninterruptibleSpinLock_Release(&heap->header.lock);
             break;
         }
     }
@@ -472,6 +500,8 @@ void MemoryMapping_CreateHeaps() {
         }
         void *address = (void *) (mem_mapping[i].effective_start_address);
         uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
+
+        memset(reinterpret_cast<void *>(mem_mapping[i].effective_start_address), 0, size);
         MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
         DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", address, size / 1024);
     }
