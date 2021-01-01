@@ -433,6 +433,25 @@ void MemoryMapping_free(void *ptr) {
     }
 }
 
+uint32_t MemoryMapping_MEMGetAllocatableSize() {
+    return MemoryMapping_MEMGetAllocatableSizeEx(4);
+}
+
+uint32_t MemoryMapping_MEMGetAllocatableSizeEx(uint32_t align) {
+    uint32_t res = 0;
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == NULL) {
+            break;
+        }
+        uint32_t curRes = MEMGetAllocatableSizeForExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, align);
+        DEBUG_FUNCTION_LINE("heap at %08X MEMGetAllocatableSizeForExpHeapEx: %d KiB", mem_mapping[i].effective_start_address, curRes / 1024);
+        if (curRes > res) {
+            res = curRes;
+        }
+    }
+    return res;
+}
+
 uint32_t MemoryMapping_GetFreeSpace() {
     uint32_t res = 0;
     for (int32_t i = 0; /* waiting for a break */; i++) {

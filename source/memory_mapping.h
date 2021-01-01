@@ -160,9 +160,13 @@ const memory_values_t mem_vals_heap[] = {
         // overridden.
         // {0x28000000 + 0x00000000, 0x28000000 + 0x0A000000},              //
 
-        {0,                       0}
+        {0, 0}
 };
 
+
+uint32_t MemoryMapping_MEMGetAllocatableSize();
+
+uint32_t MemoryMapping_MEMGetAllocatableSizeEx(uint32_t align);
 
 bool MemoryMapping_isMemoryMapped();
 
