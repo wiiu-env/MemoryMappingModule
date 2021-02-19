@@ -12,9 +12,10 @@
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_ENTRYPOINT();
+WUMS_MODULE_SKIP_WUT_INIT();
 WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 
-WUMS_INITIALIZE() {
+WUMS_INITIALIZE(args)  {
     WHBLogUdpInit();
     DEBUG_FUNCTION_LINE("Setting up memory mapping!");
     static uint8_t ucSetupRequired = 1;

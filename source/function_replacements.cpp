@@ -11,8 +11,6 @@ DECL_FUNCTION(int32_t, KiEffectiveToPhysical, uint32_t addressSpace, uint32_t vi
     return result;
 }
 
-
-
 DECL_FUNCTION(int32_t, sCheckDataRange, uint32_t address, uint32_t maxDataSize) {
     if((address & 0xF0000000) == 0x80000000){
         return 1;
