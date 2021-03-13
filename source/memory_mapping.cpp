@@ -26,7 +26,7 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
 
 void writeKernelNOPs(CThread *thread, void *arg) {
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
-    DEBUG_FUNCTION_LINE("Writing kernel NOPs on core %d", core/2);
+    DEBUG_FUNCTION_LINE_VERBOSE("Writing kernel NOPs on core %d", core/2);
 
     KernelNOPAtPhysicalAddress(0xFFF1D754);
     KernelNOPAtPhysicalAddress(0xFFF1D64C);
@@ -50,7 +50,7 @@ void writeKernelNOPs(CThread *thread, void *arg) {
 void writeSegmentRegister(CThread *thread, void *arg) {
     sr_table_t *table = (sr_table_t *) arg;
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
-    DEBUG_FUNCTION_LINE("Writing segment register to core %d", core/2);
+    DEBUG_FUNCTION_LINE_VERBOSE("Writing segment register to core %d", core/2);
 
     DCFlushRange(table, sizeof(sr_table_t));
     KernelWriteSRs(table);
@@ -58,7 +58,7 @@ void writeSegmentRegister(CThread *thread, void *arg) {
 
 void readAndPrintSegmentRegister(CThread *thread, void *arg) {
     uint16_t core = OSGetThreadAffinity(OSGetCurrentThread());
-    DEBUG_FUNCTION_LINE("Reading segment register and page table from core %d", core/2);
+    DEBUG_FUNCTION_LINE_VERBOSE("Reading segment register and page table from core %d", core/2);
     sr_table_t srTable;
     memset(&srTable, 0, sizeof(srTable));
 
@@ -66,20 +66,20 @@ void readAndPrintSegmentRegister(CThread *thread, void *arg) {
     DCFlushRange(&srTable, sizeof(srTable));
 
     for (int32_t i = 0; i < 16; i++) {
-        DEBUG_FUNCTION_LINE("[%d] SR[%d]=%08X", core, i, srTable.value[i]);
+        DEBUG_FUNCTION_LINE_VERBOSE("[%d] SR[%d]=%08X", core, i, srTable.value[i]);
     }
 
     uint32_t pageTable[0x8000];
 
     memset(pageTable, 0, sizeof(pageTable));
-    DEBUG_FUNCTION_LINE("Reading pageTable now.");
+    DEBUG_FUNCTION_LINE_VERBOSE("Reading pageTable now.");
     KernelReadPTE((uint32_t) pageTable, sizeof(pageTable));
     DCFlushRange(pageTable, sizeof(pageTable));
-    DEBUG_FUNCTION_LINE("Reading pageTable done");
+    DEBUG_FUNCTION_LINE_VERBOSE("Reading pageTable done");
 
     MemoryMapping_printPageTableTranslation(srTable, pageTable);
 
-    DEBUG_FUNCTION_LINE("-----------------------------");
+    DEBUG_FUNCTION_LINE_VERBOSE("-----------------------------");
 }
 
 bool MemoryMapping_isMemoryMapped() {
@@ -292,7 +292,7 @@ void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mappin
         }
         uint32_t cur_ea_start_address = memory_mapping[i].effective_start_address;
 
-        DEBUG_FUNCTION_LINE("Mapping area %d. effective address %08X...", i + 1, cur_ea_start_address);
+        DEBUG_FUNCTION_LINE_VERBOSE("Mapping area %d. effective address %08X...", i + 1, cur_ea_start_address);
         const memory_values_t *mem_vals = memory_mapping[i].physical_addresses;
 
         for (uint32_t j = 0;; j++) {
@@ -305,7 +305,7 @@ void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mappin
                 break;
             }
             uint32_t pa_size = pa_end_address - pa_start_address;
-            DEBUG_FUNCTION_LINE("Adding page table entry %d for mapping area %d. %08X-%08X => %08X-%08X...", j + 1, i + 1, cur_ea_start_address, memory_mapping[i].effective_start_address + pa_size, pa_start_address, pa_end_address);
+            DEBUG_FUNCTION_LINE_VERBOSE("Adding page table entry %d for mapping area %d. %08X-%08X => %08X-%08X...", j + 1, i + 1, cur_ea_start_address, memory_mapping[i].effective_start_address + pa_size, pa_start_address, pa_end_address);
             if (!MemoryMapping_mapMemory(pa_start_address, pa_end_address, cur_ea_start_address, SRTable, translation_table)) {
                 //log_print("error =(");
                 DEBUG_FUNCTION_LINE("Failed to map memory.");
@@ -336,7 +336,7 @@ void MemoryMapping_setupMemoryMapping() {
     DCFlushRange(pageTableCpy, sizeof(pageTableCpy));
 
     for (int32_t i = 0; i < 16; i++) {
-        DEBUG_FUNCTION_LINE("SR[%d]=%08X", i, srTableCpy.value[i]);
+        DEBUG_FUNCTION_LINE_VERBOSE("SR[%d]=%08X", i, srTableCpy.value[i]);
     }
 
     //printPageTableTranslation(srTableCpy,pageTableCpy);
@@ -349,11 +349,11 @@ void MemoryMapping_setupMemoryMapping() {
     uint32_t segment_index = MEMORY_START_BASE >> 28;
     uint32_t segment_content = 0x00000000 | SEGMENT_UNIQUE_ID;
 
-    DEBUG_FUNCTION_LINE("Setting SR[%d] to %08X", segment_index, segment_content);
+    DEBUG_FUNCTION_LINE_VERBOSE("Setting SR[%d] to %08X", segment_index, segment_content);
     srTableCpy.value[segment_index] = segment_content;
     DCFlushRange(&srTableCpy, sizeof(srTableCpy));
 
-    DEBUG_FUNCTION_LINE("Writing segment registers...", segment_index, segment_content);
+    DEBUG_FUNCTION_LINE_VERBOSE("Writing segment registers...", segment_index, segment_content);
     // Writing the segment registers to ALL cores.
     //
     //writeSegmentRegister(NULL, &srTableCpy);
@@ -364,11 +364,11 @@ void MemoryMapping_setupMemoryMapping() {
 
     //printPageTableTranslation(srTableCpy,pageTableCpy);
 
-    DEBUG_FUNCTION_LINE("Writing PageTable... ");
+    DEBUG_FUNCTION_LINE_VERBOSE("Writing PageTable... ");
     DCFlushRange(pageTableCpy, sizeof(pageTableCpy));
     KernelWritePTE((uint32_t) pageTableCpy, sizeof(pageTableCpy));
     DCFlushRange(pageTableCpy, sizeof(pageTableCpy));
-    DEBUG_FUNCTION_LINE("done");
+    DEBUG_FUNCTION_LINE_VERBOSE("done");
 
     //printPageTableTranslation(srTableCpy,pageTableCpy);
 
@@ -472,7 +472,7 @@ uint32_t MemoryMapping_MEMGetAllocatableSizeEx(uint32_t align) {
             break;
         }
         uint32_t curRes = MEMGetAllocatableSizeForExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, align);
-        DEBUG_FUNCTION_LINE("heap at %08X MEMGetAllocatableSizeForExpHeapEx: %d KiB", mem_mapping[i].effective_start_address, curRes / 1024);
+        DEBUG_FUNCTION_LINE_VERBOSE("heap at %08X MEMGetAllocatableSizeForExpHeapEx: %d KiB", mem_mapping[i].effective_start_address, curRes / 1024);
         if (curRes > res) {
             res = curRes;
         }
@@ -487,7 +487,7 @@ uint32_t MemoryMapping_GetFreeSpace() {
             break;
         }
         uint32_t curRes = MEMGetTotalFreeSizeForExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address);
-        DEBUG_FUNCTION_LINE("heap at %08X MEMGetTotalFreeSizeForExpHeap: %d KiB", mem_mapping[i].effective_start_address, curRes / 1024);
+        DEBUG_FUNCTION_LINE_VERBOSE("heap at %08X MEMGetTotalFreeSizeForExpHeap: %d KiB", mem_mapping[i].effective_start_address, curRes / 1024);
         res += curRes;
     }
     return res;
@@ -503,7 +503,7 @@ void MemoryMapping_CreateHeaps() {
 
         memset(reinterpret_cast<void *>(mem_mapping[i].effective_start_address), 0, size);
         MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
-        DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", address, size / 1024);
+        DEBUG_FUNCTION_LINE_VERBOSE("Created heap @%08X, size %d KiB", address, size / 1024);
     }
 }
 
@@ -517,7 +517,7 @@ void MemoryMapping_DestroyHeaps() {
 
         MEMDestroyExpHeap((MEMHeapHandle) address);
         memset(address, 0, size);
-        DEBUG_FUNCTION_LINE("Destroyed heap @%08X", address);
+        DEBUG_FUNCTION_LINE_VERBOSE("Destroyed heap @%08X", address);
     }
 }
 
@@ -654,14 +654,14 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
     for (uint32_t segment = 0; segment < 16; segment++) {
         uint32_t sr = srTable.value[segment];
         if (sr >> 31) {
-            DEBUG_FUNCTION_LINE("Direct access not supported");
+            DEBUG_FUNCTION_LINE_VERBOSE("Direct access not supported");
         } else {
             uint32_t ks = (sr >> 30) & 1;
             uint32_t kp = (sr >> 29) & 1;
             uint32_t nx = (sr >> 28) & 1;
             uint32_t vsid = sr & 0xFFFFFF;
 
-            DEBUG_FUNCTION_LINE("ks   %08X kp   %08X nx   %08X vsid %08X", ks, kp, nx, vsid);
+            DEBUG_FUNCTION_LINE_VERBOSE("ks   %08X kp   %08X nx   %08X vsid %08X", ks, kp, nx, vsid);
             uint32_t pageSize = 1 << PAGE_INDEX_SHIFT;
             for (uint32_t addr = segment * 0x10000000; addr < (segment + 1) * 0x10000000; addr += pageSize) {
                 uint32_t PTEH = 0;
@@ -714,7 +714,7 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
 
     for (std::vector<pageInformation>::iterator it = pageInfos.begin(); it != pageInfos.end(); ++it) {
         pageInformation cur = *it;
-        DEBUG_FUNCTION_LINE("%08X %08X -> %08X %08X. user access %s. supervisor access %s. %s", cur.addr, cur.addr + cur.size, cur.phys, cur.phys + cur.size, cur.kp ? access2[cur.pp] : access1[cur.pp],
+        DEBUG_FUNCTION_LINE_VERBOSE("%08X %08X -> %08X %08X. user access %s. supervisor access %s. %s", cur.addr, cur.addr + cur.size, cur.phys, cur.phys + cur.size, cur.kp ? access2[cur.pp] : access1[cur.pp],
                             cur.ks ? access2[cur.pp] : access1[cur.pp], cur.nx ? "not executable" : "executable");
     }
 }

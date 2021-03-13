@@ -25,7 +25,7 @@ WUMS_INITIALIZE(args)  {
     ucSetupRequired = 0;
     MemoryMapping_setupMemoryMapping();
     MemoryMapping_CreateHeaps();
-    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
+    DEBUG_FUNCTION_LINE_VERBOSE("Memory Mapping: Total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 
     DEBUG_FUNCTION_LINE("Patch functions");
     FunctionPatcherPatchFunction(function_replacements, function_replacements_size);
@@ -45,12 +45,12 @@ WUMS_APPLICATION_STARTS() {
 
         MEMExpHeapBlock *curUsedBlock = ((MEMExpHeap *) address)->usedList.head;
         while (curUsedBlock != nullptr) {
-            DEBUG_FUNCTION_LINE("[Memory leak info] %08X is still allocated (%d bytes)", &curUsedBlock[1], curUsedBlock->blockSize);
+            DEBUG_FUNCTION_LINE_VERBOSE("[Memory leak info] %08X is still allocated (%d bytes)", &curUsedBlock[1], curUsedBlock->blockSize);
             curUsedBlock = curUsedBlock->next;
         }
     }
 
-    DEBUG_FUNCTION_LINE("total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
+    DEBUG_FUNCTION_LINE("Memory Mapping: Current free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 }
 
 void MemoryMappingFree(void *ptr) {
