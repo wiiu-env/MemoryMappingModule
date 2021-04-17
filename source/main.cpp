@@ -16,7 +16,8 @@ WUMS_MODULE_SKIP_WUT_INIT();
 WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 
 WUMS_INITIALIZE(args)  {
-    WHBLogUdpInit();
+    // Currently we have no logging because we're skipping the wut init/fini calls.
+    // WHBLogUdpInit();
     DEBUG_FUNCTION_LINE("Setting up memory mapping!");
     static uint8_t ucSetupRequired = 1;
     if (!ucSetupRequired) {
@@ -33,7 +34,8 @@ WUMS_INITIALIZE(args)  {
 }
 
 WUMS_APPLICATION_STARTS() {
-    WHBLogUdpInit();
+    // Currently we have no logging because we're skipping the wut init/fini calls.
+    // WHBLogUdpInit();
     //MemoryMapping_DestroyHeaps();
     //MemoryMapping_CreateHeaps();
 
