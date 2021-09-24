@@ -1,6 +1,3 @@
-#include <coreinit/debug.h>
-#include <cstddef>
-#include <malloc.h>
 #include <wums.h>
 #include <whb/log.h>
 #include <whb/log_udp.h>
@@ -14,7 +11,7 @@ WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_ENTRYPOINT();
 WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 
-WUMS_INITIALIZE(args)  {
+WUMS_INITIALIZE(args) {
     WHBLogUdpInit();
     DEBUG_FUNCTION_LINE("Setting up memory mapping!");
     static uint8_t ucSetupRequired = 1;
@@ -37,7 +34,7 @@ WUMS_APPLICATION_STARTS() {
     //MemoryMapping_CreateHeaps();
 
     for (int32_t i = 0; /* waiting for a break */; i++) {
-        if (mem_mapping[i].physical_addresses == NULL) {
+        if (mem_mapping[i].physical_addresses == nullptr) {
             break;
         }
         void *address = (void *) (mem_mapping[i].effective_start_address);

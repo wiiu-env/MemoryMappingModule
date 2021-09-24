@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,7 +84,7 @@ const memory_values_t mem_vals_video[] = {
         // void * heap = (void*) SharedReadHeapTrackingAddr - [delta due mapping e.g (0xF8000000 + 0x80000000)];
         // int size = 0x20000; // value have to be a multiple of 0x20000;
         // while(true){
-        //     void * outPtr = NULL;
+        //     void * outPtr = nullptr;
         //     if(TinyHeap_Alloc(heap,size, 0x20000,&outPtr) == 0){ // value have to be a multiple of 0x20000;
         //         DEBUG_FUNCTION_LINE("Allocated %d kb on heap %08X (PA %08X)\n",size/1024,(uint32_t)outPtr, OSEffectiveToPhysical(outPtr));
         //         TinyHeap_Free(heap, outPtr);
@@ -115,7 +115,7 @@ const memory_mapping_t mem_mapping[] = {
         {MEMORY_HEAP2, MEMORY_HEAP3, mem_vals_heap_3},
         {MEMORY_HEAP3, MEMORY_HEAP4, mem_vals_heap_4},
         {MEMORY_START_VIDEO, MEMORY_END_VIDEO, mem_vals_video},
-        {0, 0, NULL}
+        {0, 0,                                 nullptr}
 };
 
 
@@ -160,7 +160,7 @@ const memory_values_t mem_vals_heap[] = {
         // overridden.
         // {0x28000000 + 0x00000000, 0x28000000 + 0x0A000000},              //
 
-        {0, 0}
+        {0,                       0}
 };
 
 
