@@ -68,13 +68,13 @@ void *MemoryMappingAlloc(uint32_t size) {
     return res;
 }
 
-void *MemoryMappingAllocEx(uint32_t size, uint32_t align) {
+void *MemoryMappingAllocEx(uint32_t size, int32_t align) {
     void *res = MemoryMapping_alloc(size, align);
     //DEBUG_FUNCTION_LINE("[res %08X] allocEX %d %d ", res, size, align);
     return res;
 }
 
-void *MemoryMappingAllocForGX2Ex(uint32_t size, uint32_t align) {
+void *MemoryMappingAllocForGX2Ex(uint32_t size, int32_t align) {
     void *res = MemoryMapping_allocVideoMemory(size, align);
     //DEBUG_FUNCTION_LINE("[res %08X] allocEX %d %d ", res, size, align);
     return res;

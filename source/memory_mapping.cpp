@@ -13,6 +13,8 @@
 #include <coreinit/debug.h>
 #include <cstdio>
 
+OSSpinLock allocFreeSpinlock;
+
 // #define DEBUG_FUNCTION_LINE(x,...)
 
 void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr = 0, int32_t iPriority = 16, int32_t iStackSize = 0x8000) {
@@ -382,17 +384,22 @@ void MemoryMapping_setupMemoryMapping() {
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
 }
 
-void *MemoryMapping_alloc(uint32_t size, uint32_t align) {
+void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
+    OSUninterruptibleSpinLock_Acquire(&allocFreeSpinlock);
     void *res = nullptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
             break;
         }
-        auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
+        uint32_t effectiveAddress = mem_mapping[i].effective_start_address;
+        auto heapHandle = (MEMHeapHandle) effectiveAddress;
         auto *heap = (MEMExpHeap *) heapHandle;
-        auto header = (MEMHeapHeader *) heap;
 
-        OSUninterruptibleSpinLock_Acquire(&header->lock);
+        // Skip non-video memory
+        if (videoOnly && ((effectiveAddress < MEMORY_START_VIDEO) || (effectiveAddress > MEMORY_END_VIDEO))) {
+            continue;
+        }
+
         res = MEMAllocFromExpHeapEx(heapHandle, size, align);
         auto cur = heap->usedList.head;
         while (cur != nullptr) {
@@ -404,39 +411,27 @@ void *MemoryMapping_alloc(uint32_t size, uint32_t align) {
             DCFlushRange(cur, sizeof(MEMExpHeapBlock));
             cur = cur->next;
         }
-        OSUninterruptibleSpinLock_Release(&header->lock);
         if (res != nullptr) {
             break;
         }
     }
+    OSUninterruptibleSpinLock_Release(&allocFreeSpinlock);
     return res;
 }
 
-void *MemoryMapping_allocVideoMemory(uint32_t size, uint32_t align) {
-    void *res = nullptr;
-    for (int32_t i = 0; /* waiting for a break */; i++) {
-        if (mem_mapping[i].physical_addresses == nullptr) {
-            break;
-        }
-        uint32_t effectiveAddress = mem_mapping[i].effective_start_address;
-
-        // Skip non-video memory
-        if (effectiveAddress < MEMORY_START_VIDEO || effectiveAddress > MEMORY_END_VIDEO) {
-            continue;
-        }
-        res = MEMAllocFromExpHeapEx((MEMHeapHandle) mem_mapping[i].effective_start_address, size, align);
-        if (res != nullptr) {
-            break;
-        }
-    }
-    return res;
+void *MemoryMapping_alloc(uint32_t size, int32_t align) {
+    return MemoryMapping_allocEx(size, align, false);
 }
 
+void *MemoryMapping_allocVideoMemory(uint32_t size, int32_t align) {
+    return MemoryMapping_allocEx(size, align, true);
+}
 
 void MemoryMapping_free(void *ptr) {
     if (ptr == nullptr) {
         return;
     }
+    OSUninterruptibleSpinLock_Acquire(&allocFreeSpinlock);
     auto ptr_val = (uint32_t) ptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -445,9 +440,7 @@ void MemoryMapping_free(void *ptr) {
         if (ptr_val > mem_mapping[i].effective_start_address && ptr_val < mem_mapping[i].effective_end_address) {
             auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
             auto *heap = (MEMExpHeap *) heapHandle;
-            auto *header = (MEMHeapHeader *) heapHandle;
 
-            OSUninterruptibleSpinLock_Acquire(&header->lock);
             MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
             auto cur = heap->usedList.head;
             while (cur != nullptr) {
@@ -459,10 +452,10 @@ void MemoryMapping_free(void *ptr) {
                 DCFlushRange(cur, sizeof(MEMExpHeapBlock));
                 cur = cur->next;
             }
-            OSUninterruptibleSpinLock_Release(&header->lock);
             break;
         }
     }
+    OSUninterruptibleSpinLock_Release(&allocFreeSpinlock);
 }
 
 uint32_t MemoryMapping_MEMGetAllocatableSize() {

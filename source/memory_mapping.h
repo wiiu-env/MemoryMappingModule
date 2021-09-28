@@ -52,7 +52,7 @@ const memory_values_t mem_vals_heap_2[] = {
 };
 
 #define MEMORY_HEAP1_SIZE 0xE20000
-#define MEMORY_HEAP1 MEMORY_HEAP0 + MEMORY_HEAP0_SIZE
+#define MEMORY_HEAP1 (MEMORY_HEAP0 + MEMORY_HEAP0_SIZE)
 
 const memory_values_t mem_vals_heap_3[] = {
         {0x28000000 + 0x058E0000, 0x28000000 + 0x06000000}, // size: 7296 kB
@@ -60,7 +60,7 @@ const memory_values_t mem_vals_heap_3[] = {
 };
 
 #define MEMORY_HEAP2_SIZE 0x720000
-#define MEMORY_HEAP2 MEMORY_HEAP1 + MEMORY_HEAP1_SIZE
+#define MEMORY_HEAP2 (MEMORY_HEAP1 + MEMORY_HEAP1_SIZE)
 
 const memory_values_t mem_vals_heap_4[] = {
         {0x28000000 + 0x053C0000, 0x28000000 + 0x05880000}, // size: 4864 kB
@@ -68,9 +68,9 @@ const memory_values_t mem_vals_heap_4[] = {
 };
 
 #define MEMORY_HEAP3_SIZE 0x4C0000
-#define MEMORY_HEAP3 MEMORY_HEAP2 + MEMORY_HEAP2_SIZE
+#define MEMORY_HEAP3 (MEMORY_HEAP2 + MEMORY_HEAP2_SIZE)
 
-#define MEMORY_HEAP4 MEMORY_HEAP3 + MEMORY_HEAP3_SIZE
+#define MEMORY_HEAP4 (MEMORY_HEAP3 + MEMORY_HEAP3_SIZE)
 
 const memory_values_t mem_vals_video[] = {
         // The GPU doesn't have access to the 0x28000000 - 0x32000000 area, so we need memory from somewhere else.
@@ -107,7 +107,7 @@ const memory_values_t mem_vals_video[] = {
 };
 
 #define MEMORY_START_VIDEO          MEMORY_START_VIDEO_BASE
-#define MEMORY_END_VIDEO            MEMORY_START_VIDEO + 0xE60000
+#define MEMORY_END_VIDEO            (MEMORY_START_VIDEO + 0xE60000)
 
 const memory_mapping_t mem_mapping[] = {
         {MEMORY_HEAP0, MEMORY_HEAP1, mem_vals_heap_1},
@@ -186,9 +186,9 @@ void MemoryMapping_readTestValuesFromMemory();
 
 void MemoryMapping_searchEmptyMemoryRegions();
 
-void *MemoryMapping_alloc(uint32_t size, uint32_t align);
+void *MemoryMapping_alloc(uint32_t size, int32_t align);
 
-void *MemoryMapping_allocVideoMemory(uint32_t size, uint32_t align);
+void *MemoryMapping_allocVideoMemory(uint32_t size, int32_t align);
 
 void MemoryMapping_free(void *ptr);
 

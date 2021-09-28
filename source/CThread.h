@@ -101,7 +101,7 @@ public:
     }
 
     //! Shutdown thread
-    virtual void shutdownThread() {
+    void shutdownThread() {
         //! wait for thread to finish
         if (pThread && !(iAttributes & eAttributeDetach)) {
             while (isThreadSuspended()) {
