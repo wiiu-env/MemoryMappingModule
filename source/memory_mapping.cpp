@@ -11,8 +11,6 @@
 #include "CThread.h"
 #include <cstring>
 
-OSSpinLock allocFreeSpinlock;
-
 // #define DEBUG_FUNCTION_LINE(x,...)
 
 void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr = 0, int32_t iPriority = 16, int32_t iStackSize = 0x8000) {
@@ -380,12 +378,9 @@ void MemoryMapping_setupMemoryMapping() {
     //readTestValuesFromMemory();
 
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
-
-    OSInitSpinLock(&allocFreeSpinlock);
 }
 
 void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
-    OSUninterruptibleSpinLock_Acquire(&allocFreeSpinlock);
     void *res = nullptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -401,12 +396,10 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
         }
 
         res = MEMAllocFromExpHeapEx(heapHandle, size, align);
-        auto cur = heap->usedList.head;
         if (res != nullptr) {
             break;
         }
     }
-    OSUninterruptibleSpinLock_Release(&allocFreeSpinlock);
     return res;
 }
 
@@ -422,7 +415,6 @@ void MemoryMapping_free(void *ptr) {
     if (ptr == nullptr) {
         return;
     }
-    OSUninterruptibleSpinLock_Acquire(&allocFreeSpinlock);
     auto ptr_val = (uint32_t) ptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -437,7 +429,6 @@ void MemoryMapping_free(void *ptr) {
             break;
         }
     }
-    OSUninterruptibleSpinLock_Release(&allocFreeSpinlock);
 }
 
 uint32_t MemoryMapping_MEMGetAllocatableSize() {
@@ -481,8 +472,8 @@ void MemoryMapping_CreateHeaps() {
         uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
 
         memset(reinterpret_cast<void *>(mem_mapping[i].effective_start_address), 0, size);
-        MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
-        DEBUG_FUNCTION_LINE_VERBOSE("Created heap @%08X, size %d KiB", address, size / 1024);
+        auto heap = MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
+        DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", heap, size / 1024);
     }
 }
 
