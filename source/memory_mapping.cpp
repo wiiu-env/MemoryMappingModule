@@ -11,9 +11,11 @@
 #include "CThread.h"
 #include <cstring>
 #include <coreinit/debug.h>
+#include <coreinit/mutex.h>
 #include <cstdio>
 
-OSSpinLock allocFreeSpinlock;
+OSMutex allocFreeMutex;
+
 
 // #define DEBUG_FUNCTION_LINE(x,...)
 
@@ -382,10 +384,11 @@ void MemoryMapping_setupMemoryMapping() {
     //readTestValuesFromMemory();
 
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
+    OSInitMutex(&allocFreeMutex);
 }
 
 void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
-    OSUninterruptibleSpinLock_Acquire(&allocFreeSpinlock);
+    OSLockMutex(&allocFreeMutex);
     void *res = nullptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -399,6 +402,8 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
         if (videoOnly && ((effectiveAddress < MEMORY_START_VIDEO) || (effectiveAddress > MEMORY_END_VIDEO))) {
             continue;
         }
+
+        DCFlushRange(heap, sizeof(MEMExpHeap));
 
         res = MEMAllocFromExpHeapEx(heapHandle, size, align);
         auto cur = heap->usedList.head;
@@ -415,7 +420,7 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
             break;
         }
     }
-    OSUninterruptibleSpinLock_Release(&allocFreeSpinlock);
+    OSUnlockMutex(&allocFreeMutex);
     return res;
 }
 
@@ -431,7 +436,7 @@ void MemoryMapping_free(void *ptr) {
     if (ptr == nullptr) {
         return;
     }
-    OSUninterruptibleSpinLock_Acquire(&allocFreeSpinlock);
+    OSLockMutex(&allocFreeMutex);
     auto ptr_val = (uint32_t) ptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -442,6 +447,7 @@ void MemoryMapping_free(void *ptr) {
             auto *heap = (MEMExpHeap *) heapHandle;
 
             MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
+            DCFlushRange(heap, sizeof(MEMExpHeap));
             auto cur = heap->usedList.head;
             while (cur != nullptr) {
                 DCFlushRange(cur, sizeof(MEMExpHeapBlock));
@@ -455,7 +461,7 @@ void MemoryMapping_free(void *ptr) {
             break;
         }
     }
-    OSUninterruptibleSpinLock_Release(&allocFreeSpinlock);
+    OSUnlockMutex(&allocFreeMutex);
 }
 
 uint32_t MemoryMapping_MEMGetAllocatableSize() {
