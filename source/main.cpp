@@ -12,8 +12,6 @@ WUMS_MODULE_SKIP_ENTRYPOINT();
 WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 
 WUMS_INITIALIZE(args) {
-    WHBLogUdpInit();
-    DEBUG_FUNCTION_LINE("Setting up memory mapping!");
     static uint8_t ucSetupRequired = 1;
     if (!ucSetupRequired) {
         return;
@@ -21,32 +19,8 @@ WUMS_INITIALIZE(args) {
     ucSetupRequired = 0;
     MemoryMapping_setupMemoryMapping();
     MemoryMapping_CreateHeaps();
-    DEBUG_FUNCTION_LINE_VERBOSE("Memory Mapping: Total free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 
-    DEBUG_FUNCTION_LINE("Patch functions");
     FunctionPatcherPatchFunction(function_replacements, function_replacements_size);
-    DEBUG_FUNCTION_LINE("Patch functions finished");
-}
-
-WUMS_APPLICATION_STARTS() {
-    WHBLogUdpInit();
-    //MemoryMapping_DestroyHeaps();
-    //MemoryMapping_CreateHeaps();
-
-    for (int32_t i = 0; /* waiting for a break */; i++) {
-        if (mem_mapping[i].physical_addresses == nullptr) {
-            break;
-        }
-        void *address = (void *) (mem_mapping[i].effective_start_address);
-
-        MEMExpHeapBlock *curUsedBlock = ((MEMExpHeap *) address)->usedList.head;
-        while (curUsedBlock != nullptr) {
-            DEBUG_FUNCTION_LINE_VERBOSE("[Memory leak info] %08X is still allocated (%d bytes)", &curUsedBlock[1], curUsedBlock->blockSize);
-            curUsedBlock = curUsedBlock->next;
-        }
-    }
-
-    DEBUG_FUNCTION_LINE("Memory Mapping: Current free space %d KiB", MemoryMapping_GetFreeSpace() / 1024);
 }
 
 void MemoryMappingFree(void *ptr) {
