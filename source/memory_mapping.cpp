@@ -10,8 +10,6 @@
 #include "logger.h"
 #include "CThread.h"
 #include <cstring>
-#include <coreinit/debug.h>
-#include <cstdio>
 
 OSSpinLock allocFreeSpinlock;
 
@@ -382,6 +380,8 @@ void MemoryMapping_setupMemoryMapping() {
     //readTestValuesFromMemory();
 
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
+
+    OSInitSpinLock(&allocFreeSpinlock);
 }
 
 void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
