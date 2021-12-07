@@ -402,15 +402,6 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
 
         res = MEMAllocFromExpHeapEx(heapHandle, size, align);
         auto cur = heap->usedList.head;
-        while (cur != nullptr) {
-            DCFlushRange(cur, sizeof(MEMExpHeapBlock));
-            cur = cur->next;
-        }
-        cur = heap->freeList.head;
-        while (cur != nullptr) {
-            DCFlushRange(cur, sizeof(MEMExpHeapBlock));
-            cur = cur->next;
-        }
         if (res != nullptr) {
             break;
         }
@@ -443,15 +434,6 @@ void MemoryMapping_free(void *ptr) {
 
             MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
             auto cur = heap->usedList.head;
-            while (cur != nullptr) {
-                DCFlushRange(cur, sizeof(MEMExpHeapBlock));
-                cur = cur->next;
-            }
-            cur = heap->freeList.head;
-            while (cur != nullptr) {
-                DCFlushRange(cur, sizeof(MEMExpHeapBlock));
-                cur = cur->next;
-            }
             break;
         }
     }
