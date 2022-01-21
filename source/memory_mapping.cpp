@@ -17,9 +17,8 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
     int32_t aff[] = {CThread::eAttributeAffCore2, CThread::eAttributeAffCore1, CThread::eAttributeAffCore0};
 
     for (int i: aff) {
-        CThread *thread = CThread::create(callback, callbackArg, iAttr | i, iPriority, iStackSize);
-        thread->resumeThread();
-        delete thread;
+        CThread thread(iAttr | i, iPriority, iStackSize, callback, callbackArg);
+        thread.resumeThread();
     }
 }
 
