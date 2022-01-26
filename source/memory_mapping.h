@@ -110,10 +110,10 @@ const memory_values_t mem_vals_video[] = {
 #define MEMORY_END_VIDEO            (MEMORY_START_VIDEO + 0xE60000)
 
 const memory_mapping_t mem_mapping[] = {
-        {MEMORY_HEAP0, MEMORY_HEAP1, mem_vals_heap_1},
-        {MEMORY_HEAP1, MEMORY_HEAP2, mem_vals_heap_2},
-        {MEMORY_HEAP2, MEMORY_HEAP3, mem_vals_heap_3},
-        {MEMORY_HEAP3, MEMORY_HEAP4, mem_vals_heap_4},
+        {MEMORY_HEAP0,       MEMORY_HEAP1,     mem_vals_heap_1},
+        {MEMORY_HEAP1,       MEMORY_HEAP2,     mem_vals_heap_2},
+        {MEMORY_HEAP2,       MEMORY_HEAP3,     mem_vals_heap_3},
+        {MEMORY_HEAP3,       MEMORY_HEAP4,     mem_vals_heap_4},
         {MEMORY_START_VIDEO, MEMORY_END_VIDEO, mem_vals_video},
         {0, 0,                                 nullptr}
 };
