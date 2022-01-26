@@ -8,7 +8,7 @@
 #include "function_replacements.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
-WUMS_MODULE_SKIP_ENTRYPOINT();
+WUMS_MODULE_SKIP_INIT_FINI();
 WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 
 WUMS_INITIALIZE(args) {
