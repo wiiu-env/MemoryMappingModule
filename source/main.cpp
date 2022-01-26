@@ -1,11 +1,8 @@
 #include <wums.h>
-#include <whb/log.h>
-#include <whb/log_udp.h>
-#include <coreinit/memexpheap.h>
 #include "memory_mapping.h"
 #include <function_patcher/function_patching.h>
-#include "logger.h"
 #include "function_replacements.h"
+#include "logger.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
@@ -22,6 +19,16 @@ WUMS_INITIALIZE(args) {
 
     FunctionPatcherPatchFunction(function_replacements, function_replacements_size);
 }
+
+#ifdef DEBUG
+WUMS_APPLICATION_STARTS() {
+    initLogging();
+}
+
+WUMS_APPLICATION_REQUESTS_EXIT() {
+    deinitLogging();
+}
+#endif
 
 void MemoryMappingFree(void *ptr) {
     //DEBUG_FUNCTION_LINE("[%08X] free", ptr);

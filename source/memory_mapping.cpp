@@ -61,7 +61,7 @@ void readAndPrintSegmentRegister(CThread *thread, void *arg) {
     DCFlushRange(&srTable, sizeof(srTable));
 
     for (int32_t i = 0; i < 16; i++) {
-        DEBUG_FUNCTION_LINE_VERBOSE("[%d] SR[%d]=%08X", core, i, srTable.value[i]);
+        DEBUG_FUNCTION_LINE_VERBOSE("[%d] SR[%d]=%08X", OSGetThreadAffinity(OSGetCurrentThread()) / 2, i, srTable.value[i]);
     }
 
     uint32_t pageTable[0x8000];
