@@ -40,7 +40,7 @@ uint32_t MemoryMappingEffectiveToPhysical(uint32_t address) {
 }
 
 uint32_t MemoryMappingPhysicalToEffective(uint32_t address) {
-    return MemoryMapping_PhysicalToEffective(address);
+    return      MemoryMapping_PhysicalToEffective(address);
 }
 
 void *MemoryMappingAlloc(uint32_t size) {
