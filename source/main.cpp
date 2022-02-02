@@ -36,7 +36,7 @@ void MemoryMappingFree(void *ptr) {
 }
 
 uint32_t MemoryMappingEffectiveToPhysical(uint32_t address) {
-    return MemoryMapping_EffectiveToPhysical(address);
+    return  MemoryMapping_EffectiveToPhysical(address);
 }
 
 uint32_t MemoryMappingPhysicalToEffective(uint32_t address) {
