@@ -1,22 +1,22 @@
 #include "memory_mapping.h"
-#include <coreinit/memorymap.h>
-#include <coreinit/memdefaultheap.h>
 #include <coreinit/cache.h>
+#include <coreinit/memdefaultheap.h>
 #include <coreinit/memexpheap.h>
+#include <coreinit/memorymap.h>
 #include <coreinit/thread.h>
 
-#include <vector>
-#include "memory.h"
-#include "logger.h"
 #include "CThread.h"
+#include "logger.h"
+#include "memory.h"
 #include <cstring>
+#include <vector>
 
 // #define DEBUG_FUNCTION_LINE(x,...)
 
 void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr = 0, int32_t iPriority = 16, int32_t iStackSize = 0x8000) {
     int32_t aff[] = {CThread::eAttributeAffCore2, CThread::eAttributeAffCore1, CThread::eAttributeAffCore0};
 
-    for (int i: aff) {
+    for (int i : aff) {
         CThread thread(iAttr | i, iPriority, iStackSize, callback, callbackArg);
         thread.resumeThread();
     }
@@ -159,7 +159,6 @@ void MemoryMapping_searchEmptyMemoryRegions() {
         if (success) {
             DEBUG_FUNCTION_LINE("Test %d was successful!", i + 1);
         }
-
     }
     DEBUG_FUNCTION_LINE("All tests done.");
 }
@@ -274,7 +273,6 @@ void MemoryMapping_readTestValuesFromMemory() {
         if (success) {
             DEBUG_FUNCTION_LINE("Test %d was successful!", i + 1);
         }
-
     }
     DEBUG_FUNCTION_LINE("All tests done.");
 }
@@ -524,7 +522,7 @@ uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize
                 cur_end_addr = (segment + 1) * 0x10000000;
             }
             if (segment != sr_start) {
-                cur_address = (segment) * 0x10000000;
+                cur_address = (segment) *0x10000000;
             }
             bool success = true;
             for (uint32_t addr = cur_address; addr < cur_end_addr; addr += pageSize) {
@@ -645,8 +643,7 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
                         current.kp == kp &&
                         current.nx == nx &&
                         current.pp == pp &&
-                        current.phys == phys - current.size
-                            ) {
+                        current.phys == phys - current.size) {
                         current.size += pageSize;
                         //DEBUG_FUNCTION_LINE("New size of %08X is %08X",current.addr,current.size);
                     } else {
@@ -681,7 +678,7 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
     const char *access1[] = {"read/write", "read/write", "read/write", "read only"};
     const char *access2[] = {"no access", "read only", "read/write", "read only"};
 
-    for (auto cur: pageInfos) {
+    for (auto cur : pageInfos) {
         DEBUG_FUNCTION_LINE_VERBOSE("%08X %08X -> %08X %08X. user access %s. supervisor access %s. %s", cur.addr, cur.addr + cur.size, cur.phys, cur.phys + cur.size,
                                     cur.kp ? access2[cur.pp] : access1[cur.pp],
                                     cur.ks ? access2[cur.pp] : access1[cur.pp], cur.nx ? "not executable" : "executable");
@@ -879,5 +876,3 @@ uint32_t MemoryMapping_EffectiveToPhysical(uint32_t effectiveAddress) {
     }
     return result;
 }
-
-

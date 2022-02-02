@@ -1,8 +1,8 @@
-#include <wums.h>
-#include "memory_mapping.h"
-#include <function_patcher/function_patching.h>
 #include "function_replacements.h"
 #include "logger.h"
+#include "memory_mapping.h"
+#include <function_patcher/function_patching.h>
+#include <wums.h>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
@@ -61,10 +61,10 @@ void *MemoryMappingAllocForGX2Ex(uint32_t size, int32_t align) {
     return res;
 }
 
-uint32_t MEMAllocFromMappedMemory __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingAlloc;
-uint32_t MEMAllocFromMappedMemoryEx __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingAllocEx;
-uint32_t MEMAllocFromMappedMemoryForGX2Ex __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingAllocForGX2Ex;
-uint32_t MEMFreeToMappedMemory __attribute__((__section__ (".data"))) = (uint32_t) MemoryMappingFree;
+uint32_t MEMAllocFromMappedMemory __attribute__((__section__(".data"))) = (uint32_t) MemoryMappingAlloc;
+uint32_t MEMAllocFromMappedMemoryEx __attribute__((__section__(".data"))) = (uint32_t) MemoryMappingAllocEx;
+uint32_t MEMAllocFromMappedMemoryForGX2Ex __attribute__((__section__(".data"))) = (uint32_t) MemoryMappingAllocForGX2Ex;
+uint32_t MEMFreeToMappedMemory __attribute__((__section__(".data"))) = (uint32_t) MemoryMappingFree;
 
 WUMS_EXPORT_FUNCTION(MemoryMappingEffectiveToPhysical);
 WUMS_EXPORT_FUNCTION(MemoryMappingPhysicalToEffective);

@@ -6,9 +6,9 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
 #include <kernel/kernel.h>
 #include <kernel/kernel_defs.h>
+#include <stdint.h>
 
 typedef struct pageInformation_ {
     uint32_t addr;
@@ -31,47 +31,58 @@ typedef struct _memory_mapping_t {
     const memory_values_t *physical_addresses;
 } memory_mapping_t;
 
+// clang-format off
 #define SEGMENT_UNIQUE_ID           0x00AABBCC // Unique ID. Chosen arbitrary.
 #define PAGE_INDEX_SHIFT            (32-15)
 #define PAGE_INDEX_MASK             ((1 << (28 - PAGE_INDEX_SHIFT)) - 1)
 
-#define MEMORY_START_BASE               0x80000000
-#define MEMORY_START_VIDEO_BASE         (MEMORY_START_BASE + 0x08000000)
+#define MEMORY_START_BASE           0x80000000
+#define MEMORY_START_VIDEO_BASE     (MEMORY_START_BASE + 0x08000000)
+// clang-format on
 
+// clang-format off
 const memory_values_t mem_vals_heap_1[] = {
         {0x28000000 + 0x06620000, 0x28000000 + 0x07F80000}, // size: 25984 kB
         {0,                       0}
 };
+// clang-format on
 
 #define MEMORY_HEAP0_SIZE 0x1960000
 #define MEMORY_HEAP0 MEMORY_START_BASE
 
+// clang-format off
 const memory_values_t mem_vals_heap_2[] = {
         {0x28000000 + 0x09000000, 0x28000000 + 0x09E20000}, // size: 14464 kB
         {0,                       0}
 };
+// clang-format on
 
 #define MEMORY_HEAP1_SIZE 0xE20000
 #define MEMORY_HEAP1 (MEMORY_HEAP0 + MEMORY_HEAP0_SIZE)
 
+// clang-format off
 const memory_values_t mem_vals_heap_3[] = {
         {0x28000000 + 0x058E0000, 0x28000000 + 0x06000000}, // size: 7296 kB
         {0,                       0}
 };
+// clang-format on
 
 #define MEMORY_HEAP2_SIZE 0x720000
 #define MEMORY_HEAP2 (MEMORY_HEAP1 + MEMORY_HEAP1_SIZE)
 
+// clang-format off
 const memory_values_t mem_vals_heap_4[] = {
         {0x28000000 + 0x053C0000, 0x28000000 + 0x05880000}, // size: 4864 kB
         {0,                       0}
 };
+// clang-format on
 
 #define MEMORY_HEAP3_SIZE 0x4C0000
 #define MEMORY_HEAP3 (MEMORY_HEAP2 + MEMORY_HEAP2_SIZE)
 
 #define MEMORY_HEAP4 (MEMORY_HEAP3 + MEMORY_HEAP3_SIZE)
 
+// clang-format off
 const memory_values_t mem_vals_video[] = {
         // The GPU doesn't have access to the 0x28000000 - 0x32000000 area, so we need memory from somewhere else.
         // From the SharedReadHeap of the loader.
@@ -105,10 +116,14 @@ const memory_values_t mem_vals_video[] = {
         //{0x18000000 , 0x18000000 +0x3000000}, // size: 3840 kB
         {0,          0}
 };
+// clang-format on
 
+// clang-format off
 #define MEMORY_START_VIDEO          MEMORY_START_VIDEO_BASE
 #define MEMORY_END_VIDEO            (MEMORY_START_VIDEO + 0xE60000)
+// clang-format on
 
+// clang-format off
 const memory_mapping_t mem_mapping[] = {
         {MEMORY_HEAP0,       MEMORY_HEAP1,     mem_vals_heap_1},
         {MEMORY_HEAP1,       MEMORY_HEAP2,     mem_vals_heap_2},
@@ -117,8 +132,9 @@ const memory_mapping_t mem_mapping[] = {
         {MEMORY_START_VIDEO, MEMORY_END_VIDEO, mem_vals_video},
         {0, 0,                                 nullptr}
 };
+// clang-format on
 
-
+// clang-format off
 // Values needs to be aligned to 0x20000 and size needs to be a multiple of 0x20000
 const memory_values_t mem_vals_heap[] = {
         // 5.5.2 EUR
@@ -162,6 +178,7 @@ const memory_values_t mem_vals_heap[] = {
 
         {0,                       0}
 };
+// clang-format on
 
 
 uint32_t MemoryMapping_MEMGetAllocatableSize();

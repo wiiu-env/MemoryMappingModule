@@ -1,7 +1,7 @@
 #pragma once
 
-#include <function_patcher/function_patching.h>
 #include <cstdint>
+#include <function_patcher/function_patching.h>
 
 extern function_replacement_data_t function_replacements[] __attribute__((section(".data")));
 

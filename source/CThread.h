@@ -16,10 +16,10 @@
  ****************************************************************************/
 #pragma once
 
+#include <coreinit/thread.h>
+#include <cstdint>
 #include <malloc.h>
 #include <unistd.h>
-#include <cstdint>
-#include <coreinit/thread.h>
 
 class CThread {
 public:
@@ -27,7 +27,7 @@ public:
 
     //! constructor
     explicit CThread(int32_t iAttr, int32_t iPriority = 16, int32_t iStackSize = 0x8000, CThread::Callback callback = nullptr, void *callbackArg = nullptr)
-            : pThread(nullptr), pThreadStack(nullptr), pCallback(callback), pCallbackArg(callbackArg) {
+        : pThread(nullptr), pThreadStack(nullptr), pCallback(callback), pCallbackArg(callbackArg) {
         //! save attribute assignment
         iAttributes = iAttr;
         //! allocate the thread
@@ -36,7 +36,9 @@ public:
         pThreadStack = (uint8_t *) memalign(0x20, iStackSize);
         //! create the thread
         if (pThread && pThreadStack) {
-            OSCreateThread(pThread, (int (*)(int, const char **)) &CThread::threadCallback, 1, (char *) this, (void *) (pThreadStack + iStackSize), iStackSize, iPriority, iAttributes);
+            // clang-format off
+            OSCreateThread(pThread, (int(*)(int, const char **)) & CThread::threadCallback, 1, (char *) this, (void *) (pThreadStack + iStackSize), iStackSize, iPriority, iAttributes);
+            // clang-format on
         }
     }
 
@@ -129,6 +131,7 @@ public:
         eAttributeDetach = 0x08,
         eAttributePinnedAff = 0x10
     };
+
 private:
     static int32_t threadCallback(int32_t argc, void *arg) {
         //! After call to start() continue with the internal function

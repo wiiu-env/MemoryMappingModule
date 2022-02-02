@@ -31,7 +31,6 @@ DECL_FUNCTION(uint32_t, KiPhysicalToEffectiveUncached, uint32_t addressSpace, ui
     uint32_t result = real_KiPhysicalToEffectiveUncached(addressSpace, virtualAddress);
     if (result == 0) {
         return MemoryMapping_PhysicalToEffective(virtualAddress);
-
     }
     return result;
 }
@@ -54,10 +53,12 @@ DECL_FUNCTION(uint32_t, KiIsEffectiveRangeValid, uint32_t addressSpace, uint32_t
 }
 
 
-#define k_memcpy ((void (*)( void*, void*,uint32_t))(0xfff09e44))
+// clang-format off
+#define k_memcpy ((void(*)(void *, void *, uint32_t))(0xfff09e44))
+// clang-format on
 
 DECL_FUNCTION(uint32_t, KiGetOrPutUserData, void *src, uint32_t size, void *dst, bool isRead) {
-    // 
+    //
     if (isRead && MemoryMapping_EffectiveToPhysical((uint32_t) src) > 0) {
         k_memcpy(dst, src, size);
         return 1;
@@ -70,6 +71,7 @@ DECL_FUNCTION(uint32_t, KiGetOrPutUserData, void *src, uint32_t size, void *dst,
     return real_KiGetOrPutUserData(src, size, dst, isRead);
 }
 
+// clang-format off
 function_replacement_data_t function_replacements[] __attribute__((section(".data"))) = {
         REPLACE_FUNCTION_VIA_ADDRESS(sCheckDataRange,                       0x3200cf60, 0x0100cf60),
         REPLACE_FUNCTION_VIA_ADDRESS(KiEffectiveToPhysical,                 0xffee0aac, 0xffee0aac),
@@ -79,5 +81,6 @@ function_replacement_data_t function_replacements[] __attribute__((section(".dat
         REPLACE_FUNCTION_VIA_ADDRESS(IPCKDriver_ValidatePhysicalAddress,    0xfff0cb5c, 0xfff0cb5c),
         REPLACE_FUNCTION_VIA_ADDRESS(KiGetOrPutUserData,                    0xffee0794, 0xffee0794),
 };
+// clang-format on
 
 uint32_t function_replacements_size __attribute__((section(".data"))) = sizeof(function_replacements) / sizeof(function_replacement_data_t);
