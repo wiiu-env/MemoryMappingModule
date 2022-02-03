@@ -102,25 +102,25 @@ void MemoryMapping_searchEmptyMemoryRegions() {
         uint32_t ea_size = 0;
         for (uint32_t j = 0;; j++) {
             uint32_t pa_start_address = mem_vals[j].start_address;
-            uint32_t pa_end_address = mem_vals[j].end_address;
+            uint32_t pa_end_address   = mem_vals[j].end_address;
             if (pa_end_address == 0 && pa_start_address == 0) {
                 break;
             }
             ea_size += pa_end_address - pa_start_address;
         }
 
-        auto *flush_start = (uint32_t *) ea_start_address;
+        auto *flush_start   = (uint32_t *) ea_start_address;
         uint32_t flush_size = ea_size;
 
         DEBUG_FUNCTION_LINE("Flushing %08X (%d kB) at %08X.", flush_size, flush_size / 1024, flush_start);
         DCFlushRange(flush_start, flush_size);
 
         DEBUG_FUNCTION_LINE("Searching in memory region %d. 0x%08X - 0x%08X. Size 0x%08X (%d KBytes).", i + 1, ea_start_address, ea_start_address + ea_size, ea_size, ea_size / 1024);
-        bool success = true;
-        auto *memory_ptr = (uint32_t *) ea_start_address;
-        bool inFailRange = false;
+        bool success          = true;
+        auto *memory_ptr      = (uint32_t *) ea_start_address;
+        bool inFailRange      = false;
         uint32_t startFailing = 0;
-        uint32_t startGood = ea_start_address;
+        uint32_t startGood    = ea_start_address;
         for (uint32_t j = 0; j < ea_size / 4; j++) {
             if (memory_ptr[j] != 0) {
                 success = false;
@@ -131,22 +131,22 @@ void MemoryMapping_searchEmptyMemoryRegions() {
                             start_addr += 0x20000;
                         }
                         uint32_t end_addr = ((uint32_t) &memory_ptr[j]) - MEMORY_START_BASE;
-                        end_addr = (end_addr & 0xFFFE0000);
+                        end_addr          = (end_addr & 0xFFFE0000);
                         DEBUG_FUNCTION_LINE("+ Free between 0x%08X and 0x%08X size: %u kB", start_addr - MEMORY_START_BASE, end_addr,
                                             (((uint32_t) end_addr) - ((uint32_t) startGood - MEMORY_START_BASE)) / 1024);
                     }
                     startFailing = (uint32_t) &memory_ptr[j];
-                    inFailRange = true;
-                    startGood = 0;
-                    j = ((j & 0xFFFF8000) + 0x00008000) - 1;
+                    inFailRange  = true;
+                    startGood    = 0;
+                    j            = ((j & 0xFFFF8000) + 0x00008000) - 1;
                 }
                 //break;
             } else {
                 if (inFailRange) {
                     //DEBUG_FUNCTION_LINE("- Error between 0x%08X and 0x%08X size: %u kB",startFailing,&memory_ptr[j],(((uint32_t)&memory_ptr[j])-(uint32_t)startFailing)/1024);
                     startFailing = 0;
-                    startGood = (uint32_t) &memory_ptr[j];
-                    inFailRange = false;
+                    startGood    = (uint32_t) &memory_ptr[j];
+                    inFailRange  = false;
                 }
             }
         }
@@ -177,10 +177,10 @@ void MemoryMapping_writeTestValuesToMemory() {
         DEBUG_FUNCTION_LINE("Preparing memory test for region %d. Region start at effective address %08X.", i + 1, cur_ea_start_address);
 
         const memory_values_t *mem_vals = mem_mapping[i].physical_addresses;
-        uint32_t counter = 0;
+        uint32_t counter                = 0;
         for (uint32_t j = 0;; j++) {
             uint32_t pa_start_address = mem_vals[j].start_address;
-            uint32_t pa_end_address = mem_vals[j].end_address;
+            uint32_t pa_end_address   = mem_vals[j].end_address;
             if (pa_end_address == 0 && pa_start_address == 0) {
                 break;
             }
@@ -199,7 +199,7 @@ void MemoryMapping_writeTestValuesToMemory() {
                 }
                 //DEBUG_FUNCTION_LINE("testBuffer[%d] = %d",i % chunk_size,i);
             }
-            auto *flush_start = (uint32_t *) cur_ea_start_address;
+            auto *flush_start   = (uint32_t *) cur_ea_start_address;
             uint32_t flush_size = pa_size;
 
             cur_ea_start_address += pa_size;
@@ -226,42 +226,42 @@ void MemoryMapping_readTestValuesFromMemory() {
         uint32_t ea_size = 0;
         for (uint32_t j = 0;; j++) {
             uint32_t pa_start_address = mem_vals[j].start_address;
-            uint32_t pa_end_address = mem_vals[j].end_address;
+            uint32_t pa_end_address   = mem_vals[j].end_address;
             if (pa_end_address == 0 && pa_start_address == 0) {
                 break;
             }
             ea_size += pa_end_address - pa_start_address;
         }
 
-        auto *flush_start = (uint32_t *) ea_start_address;
+        auto *flush_start   = (uint32_t *) ea_start_address;
         uint32_t flush_size = ea_size;
 
         DEBUG_FUNCTION_LINE("Flushing %08X (%d kB) at %08X to map memory.", flush_size, flush_size / 1024, flush_start);
         DCFlushRange(flush_start, flush_size);
 
         DEBUG_FUNCTION_LINE("Testing memory region %d. 0x%08X - 0x%08X. Size 0x%08X (%d KBytes).", i + 1, ea_start_address, ea_start_address + ea_size, ea_size, ea_size / 1024);
-        bool success = true;
-        auto *memory_ptr = (uint32_t *) ea_start_address;
-        bool inFailRange = false;
+        bool success          = true;
+        auto *memory_ptr      = (uint32_t *) ea_start_address;
+        bool inFailRange      = false;
         uint32_t startFailing = 0;
-        uint32_t startGood = ea_start_address;
+        uint32_t startGood    = ea_start_address;
         for (uint32_t j = 0; j < ea_size / 4; j++) {
             if (memory_ptr[j] != j) {
                 success = false;
                 if (!inFailRange) {
                     DEBUG_FUNCTION_LINE("+ Good  between 0x%08X and 0x%08X size: %u kB", startGood, &memory_ptr[j], (((uint32_t) &memory_ptr[j]) - (uint32_t) startGood) / 1024);
                     startFailing = (uint32_t) &memory_ptr[j];
-                    inFailRange = true;
-                    startGood = 0;
-                    j = ((j & 0xFFFF8000) + 0x00008000) - 1;
+                    inFailRange  = true;
+                    startGood    = 0;
+                    j            = ((j & 0xFFFF8000) + 0x00008000) - 1;
                 }
                 //break;
             } else {
                 if (inFailRange) {
                     DEBUG_FUNCTION_LINE("- Error between 0x%08X and 0x%08X size: %u kB", startFailing, &memory_ptr[j], (((uint32_t) &memory_ptr[j]) - (uint32_t) startFailing) / 1024);
                     startFailing = 0;
-                    startGood = (uint32_t) &memory_ptr[j];
-                    inFailRange = false;
+                    startGood    = (uint32_t) &memory_ptr[j];
+                    inFailRange  = false;
                 }
             }
         }
@@ -292,7 +292,7 @@ void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mappin
         for (uint32_t j = 0;; j++) {
             //DEBUG_FUNCTION_LINE("In inner loop %d",j);
             uint32_t pa_start_address = mem_vals[j].start_address;
-            uint32_t pa_end_address = mem_vals[j].end_address;
+            uint32_t pa_end_address   = mem_vals[j].end_address;
             if (pa_end_address == 0 && pa_start_address == 0) {
                 //DEBUG_FUNCTION_LINE("inner break %d",j);
                 // Break if entry was empty.
@@ -341,7 +341,7 @@ void MemoryMapping_setupMemoryMapping() {
     // is currently unmapped.
     // This is nice because it leads to SR[8] which also seems to be unused (was set to 0x30FFFFFF)
     // The content of the segment was chosen randomly.
-    uint32_t segment_index = MEMORY_START_BASE >> 28;
+    uint32_t segment_index   = MEMORY_START_BASE >> 28;
     uint32_t segment_content = 0x00000000 | SEGMENT_UNIQUE_ID;
 
     DEBUG_FUNCTION_LINE_VERBOSE("Setting SR[%d] to %08X", segment_index, segment_content);
@@ -384,8 +384,8 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
             break;
         }
         uint32_t effectiveAddress = mem_mapping[i].effective_start_address;
-        auto heapHandle = (MEMHeapHandle) effectiveAddress;
-        auto *heap = (MEMExpHeap *) heapHandle;
+        auto heapHandle           = (MEMHeapHandle) effectiveAddress;
+        auto *heap                = (MEMExpHeap *) heapHandle;
 
         // Skip non-video memory
         if (videoOnly && ((effectiveAddress < MEMORY_START_VIDEO) || (effectiveAddress > MEMORY_END_VIDEO))) {
@@ -419,7 +419,7 @@ void MemoryMapping_free(void *ptr) {
         }
         if (ptr_val > mem_mapping[i].effective_start_address && ptr_val < mem_mapping[i].effective_end_address) {
             auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
-            auto *heap = (MEMExpHeap *) heapHandle;
+            auto *heap      = (MEMExpHeap *) heapHandle;
 
             MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
             auto cur = heap->usedList.head;
@@ -496,7 +496,7 @@ uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize
     KernelReadPTE((uint32_t) pageTable, sizeof(pageTable));
 
     uint32_t sr_start = start >> 28;
-    uint32_t sr_end = (start + maxSize) >> 28;
+    uint32_t sr_end   = (start + maxSize) >> 28;
 
     if (sr_end < sr_start) {
         return 0;
@@ -514,7 +514,7 @@ uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize
         } else {
             uint32_t vsid = sr & 0xFFFFFF;
 
-            uint32_t pageSize = 1 << PAGE_INDEX_SHIFT;
+            uint32_t pageSize     = 1 << PAGE_INDEX_SHIFT;
             uint32_t cur_end_addr = 0;
             if (segment == sr_end) {
                 cur_end_addr = end_address;
@@ -544,8 +544,8 @@ uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize
 }
 
 bool MemoryMapping_getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_t vsid, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, bool checkSecondHash) {
-    uint32_t pageMask = SDR1 & 0x1FF;
-    uint32_t pageIndex = (addr >> PAGE_INDEX_SHIFT) & PAGE_INDEX_MASK;
+    uint32_t pageMask    = SDR1 & 0x1FF;
+    uint32_t pageIndex   = (addr >> PAGE_INDEX_SHIFT) & PAGE_INDEX_MASK;
     uint32_t primaryHash = (vsid & 0x7FFFF) ^ pageIndex;
 
     if (MemoryMapping_getPageEntryForAddressEx(SDR1, addr, vsid, primaryHash, translation_table, oPTEH, oPTEL, 0)) {
@@ -563,7 +563,7 @@ bool MemoryMapping_getPageEntryForAddress(uint32_t SDR1, uint32_t addr, uint32_t
 
 bool MemoryMapping_getPageEntryForAddressEx(uint32_t pageMask, uint32_t addr, uint32_t vsid, uint32_t primaryHash, uint32_t *translation_table, uint32_t *oPTEH, uint32_t *oPTEL, uint32_t H) {
     uint32_t maskedHash = primaryHash & ((pageMask << 10) | 0x3FF);
-    uint32_t api = (addr >> 22) & 0x3F;
+    uint32_t api        = (addr >> 22) & 0x3F;
 
     uint32_t pteAddrOffset = (maskedHash << 6);
 
@@ -623,9 +623,9 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
         if (sr >> 31) {
             DEBUG_FUNCTION_LINE_VERBOSE("Direct access not supported");
         } else {
-            uint32_t ks = (sr >> 30) & 1;
-            uint32_t kp = (sr >> 29) & 1;
-            uint32_t nx = (sr >> 28) & 1;
+            uint32_t ks   = (sr >> 30) & 1;
+            uint32_t kp   = (sr >> 29) & 1;
+            uint32_t nx   = (sr >> 28) & 1;
             uint32_t vsid = sr & 0xFFFFFF;
 
             DEBUG_FUNCTION_LINE_VERBOSE("ks   %08X kp   %08X nx   %08X vsid %08X", ks, kp, nx, vsid);
@@ -634,7 +634,7 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
                 uint32_t PTEH = 0;
                 uint32_t PTEL = 0;
                 if (MemoryMapping_getPageEntryForAddress(SDR1, addr, vsid, translation_table, &PTEH, &PTEL, false)) {
-                    uint32_t pp = PTEL & 3;
+                    uint32_t pp   = PTEL & 3;
                     uint32_t phys = PTEL & 0xFFFFF000;
 
                     //DEBUG_FUNCTION_LINE("current.phys == phys - current.size ( %08X %08X)",current.phys, phys - current.size);
@@ -659,10 +659,10 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
                         //DEBUG_FUNCTION_LINE("Found new block at %08X",addr);
                         current.addr = addr;
                         current.size = pageSize;
-                        current.kp = kp;
-                        current.ks = ks;
-                        current.nx = nx;
-                        current.pp = pp;
+                        current.kp   = kp;
+                        current.ks   = ks;
+                        current.nx   = nx;
+                        current.pp   = pp;
                         current.phys = phys;
                     }
                 } else {
@@ -694,7 +694,7 @@ bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address,
 
     // Information on page 5.
     // https://www.nxp.com/docs/en/application-note/AN2794.pdf
-    uint32_t HTABORG = SRTable.sdr1 >> 16;
+    uint32_t HTABORG  = SRTable.sdr1 >> 16;
     uint32_t HTABMASK = SRTable.sdr1 & 0x1FF;
 
     // Iterate to all possible pages. Each page is 1<<(PAGE_INDEX_SHIFT) big.
@@ -709,7 +709,7 @@ bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address,
         // Unique ID from the segment which is the input for the hash function.
         // Change it to prevent collisions.
         uint32_t VSID = segment & 0x00FFFFFF;
-        uint32_t V = 1;
+        uint32_t V    = 1;
 
         //Indicated if second hash is used.
         uint32_t H = 0;
@@ -717,13 +717,13 @@ bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address,
         // Abbreviated Page Index
 
         // Real page number
-        uint32_t RPN = (pa_start_address + i) >> 12;
-        uint32_t RC = 3;
+        uint32_t RPN  = (pa_start_address + i) >> 12;
+        uint32_t RC   = 3;
         uint32_t WIMG = 0x02;
-        uint32_t PP = 0x02;
+        uint32_t PP   = 0x02;
 
         uint32_t page_index = (ea_addr >> PAGE_INDEX_SHIFT) & PAGE_INDEX_MASK;
-        uint32_t API = (ea_addr >> 22) & 0x3F;
+        uint32_t API        = (ea_addr >> 22) & 0x3F;
 
         uint32_t PTEH = (V << 31) | (VSID << 7) | (H << 6) | API;
         uint32_t PTEL = (RPN << 12) | (RC << 7) | (WIMG << 3) | PP;
@@ -761,9 +761,9 @@ bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address,
             if (pteh == 0) {
                 // If we found a free slot, set the PTEH and PTEL value.
                 //DEBUG_FUNCTION_LINE("Used slot %d. PTEGaddr1 %08X addr %08X",j+1,PTEGaddr1 - (HTABORG << 16),PTEGoffset);
-                translation_table[index] = PTEH;
+                translation_table[index]     = PTEH;
                 translation_table[index + 1] = PTEL;
-                setSuccessfully = true;
+                setSuccessfully              = true;
                 break;
             } else {
                 //printf("PTEGoffset %08X was taken",PTEGoffset);
@@ -776,8 +776,8 @@ bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address,
             // We still have a chance to find a slot in the PTEGaddr2 using the complement of the hash.
             // We need to set the H flag in PTEH and use PTEGaddr2.
             // (Not well tested)
-            H = 1;
-            PTEH = (V << 31) | (VSID << 7) | (H << 6) | API;
+            H          = 1;
+            PTEH       = (V << 31) | (VSID << 7) | (H << 6) | API;
             PTEGoffset = PTEGaddr2 - (HTABORG << 16);
             PTEGoffset += 7 * 8;
             // Same as before.
@@ -786,9 +786,9 @@ bool MemoryMapping_mapMemory(uint32_t pa_start_address, uint32_t pa_end_address,
                 uint32_t pteh = translation_table[index];
                 //Check if it's already taken.
                 if (pteh == 0) {
-                    translation_table[index] = PTEH;
+                    translation_table[index]     = PTEH;
                     translation_table[index + 1] = PTEL;
-                    setSuccessfully = true;
+                    setSuccessfully              = true;
                     break;
                 } else {
                     //printf("PTEGoffset %08X was taken",PTEGoffset);
@@ -811,7 +811,7 @@ uint32_t MemoryMapping_PhysicalToEffective(uint32_t phyiscalAddress) {
         return phyiscalAddress - (0x30800000 - 0x00800000);
     }
 
-    uint32_t result = 0;
+    uint32_t result                     = 0;
     const memory_values_t *curMemValues = nullptr;
     //iterate through all own mapped memory regions
     for (int32_t i = 0; true; i++) {
@@ -819,7 +819,7 @@ uint32_t MemoryMapping_PhysicalToEffective(uint32_t phyiscalAddress) {
             break;
         }
 
-        curMemValues = mem_mapping[i].physical_addresses;
+        curMemValues           = mem_mapping[i].physical_addresses;
         uint32_t curOffsetInEA = 0;
         // iterate through all memory values of this region
         for (int32_t j = 0; true; j++) {
@@ -846,7 +846,7 @@ uint32_t MemoryMapping_EffectiveToPhysical(uint32_t effectiveAddress) {
     uint32_t result = 0;
     // CAUTION: The data may be fragmented between multiple areas in PA.
     const memory_values_t *curMemValues = nullptr;
-    uint32_t curOffset = 0;
+    uint32_t curOffset                  = 0;
 
     for (int32_t i = 0; true; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -854,7 +854,7 @@ uint32_t MemoryMapping_EffectiveToPhysical(uint32_t effectiveAddress) {
         }
         if (effectiveAddress >= mem_mapping[i].effective_start_address && effectiveAddress < mem_mapping[i].effective_end_address) {
             curMemValues = mem_mapping[i].physical_addresses;
-            curOffset = mem_mapping[i].effective_start_address;
+            curOffset    = mem_mapping[i].effective_start_address;
             break;
         }
     }
