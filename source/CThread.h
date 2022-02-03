@@ -118,17 +118,17 @@ public:
         if (pThread) {
             free(pThread);
         }
-        pThread = nullptr;
+        pThread      = nullptr;
         pThreadStack = nullptr;
     }
 
     //! Thread attributes
     enum eCThreadAttributes {
-        eAttributeNone = 0x07,
-        eAttributeAffCore0 = 0x01,
-        eAttributeAffCore1 = 0x02,
-        eAttributeAffCore2 = 0x04,
-        eAttributeDetach = 0x08,
+        eAttributeNone      = 0x07,
+        eAttributeAffCore0  = 0x01,
+        eAttributeAffCore1  = 0x02,
+        eAttributeAffCore2  = 0x04,
+        eAttributeDetach    = 0x08,
         eAttributePinnedAff = 0x10
     };
 
