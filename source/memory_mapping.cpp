@@ -395,6 +395,9 @@ void MemoryMapping_setupMemoryMapping() {
     OSInitMutex(&allocMutex);
 }
 
+#define ROUNDDOWN(val, align) ((val) & ~(align - 1))
+#define ROUNDUP(val, align)   ROUNDDOWN(((val) + (align - 1)), align)
+
 void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
     OSLockMutex(&allocMutex);
     void *res = nullptr;
@@ -411,7 +414,10 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
             continue;
         }
 
-        res = MEMAllocFromExpHeapEx(heapHandle, size, align);
+        // We round up the size to avoid heap corruption.
+        // FSReadFile expects the buffer size to be a multiple of 0x40
+        // This can remove once all modules/plugins have been updated :)
+        res = MEMAllocFromExpHeapEx(heapHandle, ROUNDUP(size, 0x40), align);
         if (res != nullptr) {
             break;
         }
