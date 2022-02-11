@@ -416,6 +416,7 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
             break;
         }
     }
+    OSMemoryBarrier();
     OSUnlockMutex(&allocMutex);
     return res;
 }
@@ -447,6 +448,7 @@ void MemoryMapping_free(void *ptr) {
             break;
         }
     }
+    OSMemoryBarrier();
     OSUnlockMutex(&allocMutex);
 }
 
