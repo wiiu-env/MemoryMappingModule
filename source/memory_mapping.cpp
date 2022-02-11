@@ -25,23 +25,37 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
 void writeKernelNOPs(CThread *thread, void *arg) {
     DEBUG_FUNCTION_LINE_VERBOSE("Writing kernel NOPs on core %d", OSGetThreadAffinity(OSGetCurrentThread()) / 2);
 
+    // Patch out any writes to SR8
     KernelNOPAtPhysicalAddress(0xFFF1D754);
     KernelNOPAtPhysicalAddress(0xFFF1D64C);
     KernelNOPAtPhysicalAddress(0xFFE00638);
 
+    // nop out branches to app panic 0x17
     KernelNOPAtPhysicalAddress(0xfff01db0);
-    KernelNOPAtPhysicalAddress(0xfff01db4);
-    KernelNOPAtPhysicalAddress(0xfff01a00);
-    KernelNOPAtPhysicalAddress(0xfff01a04);
     KernelNOPAtPhysicalAddress(0xfff01e90);
     KernelNOPAtPhysicalAddress(0xfff01ea0);
     KernelNOPAtPhysicalAddress(0xfff01ea4);
 
+    // nop out branches to app panic 0x12
+    KernelNOPAtPhysicalAddress(0xfff01a00);
+    KernelNOPAtPhysicalAddress(0xfff01b68);
+    KernelNOPAtPhysicalAddress(0xfff01b70);
+    KernelNOPAtPhysicalAddress(0xfff01b7c);
+    KernelNOPAtPhysicalAddress(0xfff01b80);
+
+    // nop out branches to app panic 0x16
     KernelNOPAtPhysicalAddress(0xfff0db24);
     KernelNOPAtPhysicalAddress(0xfff0dbb4);
     KernelNOPAtPhysicalAddress(0xfff0dbbc);
     KernelNOPAtPhysicalAddress(0xfff0dbc8);
     KernelNOPAtPhysicalAddress(0xfff0dbcc);
+
+    // nop out branches to app panic 0x14
+    KernelNOPAtPhysicalAddress(0xfff01cfc);
+    KernelNOPAtPhysicalAddress(0xfff01d4c);
+    KernelNOPAtPhysicalAddress(0xfff01d54);
+    KernelNOPAtPhysicalAddress(0xfff01d60);
+    KernelNOPAtPhysicalAddress(0xfff01d64);
 }
 
 void writeSegmentRegister(CThread *thread, void *arg) {
