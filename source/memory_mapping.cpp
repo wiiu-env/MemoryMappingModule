@@ -8,10 +8,13 @@
 #include "CThread.h"
 #include "logger.h"
 #include "memory.h"
+#include <coreinit/mutex.h>
 #include <cstring>
 #include <vector>
 
 // #define DEBUG_FUNCTION_LINE(x,...)
+
+OSMutex allocMutex;
 
 void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr = 0, int32_t iPriority = 16, int32_t iStackSize = 0x8000) {
     int32_t aff[] = {CThread::eAttributeAffCore2, CThread::eAttributeAffCore1, CThread::eAttributeAffCore0};
@@ -389,9 +392,11 @@ void MemoryMapping_setupMemoryMapping() {
     //readTestValuesFromMemory();
 
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
+    OSInitMutex(&allocMutex);
 }
 
 void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
+    OSLockMutex(&allocMutex);
     void *res = nullptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -411,6 +416,7 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
             break;
         }
     }
+    OSUnlockMutex(&allocMutex);
     return res;
 }
 
@@ -426,6 +432,7 @@ void MemoryMapping_free(void *ptr) {
     if (ptr == nullptr) {
         return;
     }
+    OSLockMutex(&allocMutex);
     auto ptr_val = (uint32_t) ptr;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -440,6 +447,7 @@ void MemoryMapping_free(void *ptr) {
             break;
         }
     }
+    OSUnlockMutex(&allocMutex);
 }
 
 uint32_t MemoryMapping_MEMGetAllocatableSize() {
@@ -447,6 +455,7 @@ uint32_t MemoryMapping_MEMGetAllocatableSize() {
 }
 
 uint32_t MemoryMapping_MEMGetAllocatableSizeEx(uint32_t align) {
+    OSLockMutex(&allocMutex);
     uint32_t res = 0;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -458,10 +467,12 @@ uint32_t MemoryMapping_MEMGetAllocatableSizeEx(uint32_t align) {
             res = curRes;
         }
     }
+    OSUnlockMutex(&allocMutex);
     return res;
 }
 
 uint32_t MemoryMapping_GetFreeSpace() {
+    OSLockMutex(&allocMutex);
     uint32_t res = 0;
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
@@ -471,10 +482,12 @@ uint32_t MemoryMapping_GetFreeSpace() {
         DEBUG_FUNCTION_LINE_VERBOSE("heap at %08X MEMGetTotalFreeSizeForExpHeap: %d KiB", mem_mapping[i].effective_start_address, curRes / 1024);
         res += curRes;
     }
+    OSUnlockMutex(&allocMutex);
     return res;
 }
 
 void MemoryMapping_CreateHeaps() {
+    OSLockMutex(&allocMutex);
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
             break;
@@ -486,9 +499,11 @@ void MemoryMapping_CreateHeaps() {
         auto heap = MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
         DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", heap, size / 1024);
     }
+    OSUnlockMutex(&allocMutex);
 }
 
 void MemoryMapping_DestroyHeaps() {
+    OSLockMutex(&allocMutex);
     for (int32_t i = 0; /* waiting for a break */; i++) {
         if (mem_mapping[i].physical_addresses == nullptr) {
             break;
@@ -500,6 +515,7 @@ void MemoryMapping_DestroyHeaps() {
         memset(address, 0, size);
         DEBUG_FUNCTION_LINE_VERBOSE("Destroyed heap @%08X", address);
     }
+    OSUnlockMutex(&allocMutex);
 }
 
 uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize) {
