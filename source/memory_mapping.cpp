@@ -1,7 +1,9 @@
 #include "memory_mapping.h"
 #include <coreinit/cache.h>
+#include <coreinit/memblockheap.h>
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/memexpheap.h>
+#include <coreinit/memlist.h>
 #include <coreinit/memorymap.h>
 #include <coreinit/thread.h>
 
@@ -427,6 +429,29 @@ void *MemoryMapping_alloc(uint32_t size, int32_t align) {
 
 void *MemoryMapping_allocVideoMemory(uint32_t size, int32_t align) {
     return MemoryMapping_allocEx(size, align, true);
+}
+
+// clang-format off
+#define FindHeapContainingBlock ((MEMHeapHandle (*) (MEMMemoryList *, void *) )(0x101C400 + 0x2f2d8))
+// clang-format on
+
+MEMHeapHandle MemoryMapping_MEMFindContainHeap(void *block) {
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == nullptr) {
+            break;
+        }
+        uint32_t effectiveAddress = mem_mapping[i].effective_start_address;
+        auto heapHandle           = (MEMHeapHandle) effectiveAddress;
+        auto *heap                = (MEMExpHeap *) heapHandle;
+        if (block >= heap->header.dataStart &&
+            block < heap->header.dataEnd) {
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+            auto child = FindHeapContainingBlock(&heap->header.list, block);
+            return child ? child : heapHandle;
+        }
+    }
+
+    return nullptr;
 }
 
 void MemoryMapping_free(void *ptr) {

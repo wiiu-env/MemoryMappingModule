@@ -1,7 +1,6 @@
 #include "function_replacements.h"
-
 #include "memory_mapping.h"
-
+#include <coreinit/memheap.h>
 
 DECL_FUNCTION(uint32_t, KiEffectiveToPhysical, uint32_t addressSpace, uint32_t virtualAddress) {
     uint32_t result = real_KiEffectiveToPhysical(addressSpace, virtualAddress);
@@ -52,7 +51,6 @@ DECL_FUNCTION(uint32_t, KiIsEffectiveRangeValid, uint32_t addressSpace, uint32_t
     return result;
 }
 
-
 // clang-format off
 #define k_memcpy ((void(*)(void *, void *, uint32_t))(0xfff09e44))
 // clang-format on
@@ -71,6 +69,15 @@ DECL_FUNCTION(uint32_t, KiGetOrPutUserData, void *src, uint32_t size, void *dst,
     return real_KiGetOrPutUserData(src, size, dst, isRead);
 }
 
+DECL_FUNCTION(MEMHeapHandle, MEMFindContainHeap, void *block) {
+    auto result = MemoryMapping_MEMFindContainHeap(block);
+    if (result == nullptr) {
+        return real_MEMFindContainHeap(block);
+    }
+
+    return result;
+}
+
 // clang-format off
 function_replacement_data_t function_replacements[] __attribute__((section(".data"))) = {
         REPLACE_FUNCTION_VIA_ADDRESS(sCheckDataRange,                       0x3200cf60, 0x0100cf60),
@@ -80,6 +87,7 @@ function_replacement_data_t function_replacements[] __attribute__((section(".dat
         REPLACE_FUNCTION_VIA_ADDRESS(KiIsEffectiveRangeValid,               0xffee0d6c, 0xffee0d6c),
         REPLACE_FUNCTION_VIA_ADDRESS(IPCKDriver_ValidatePhysicalAddress,    0xfff0cb5c, 0xfff0cb5c),
         REPLACE_FUNCTION_VIA_ADDRESS(KiGetOrPutUserData,                    0xffee0794, 0xffee0794),
+        REPLACE_FUNCTION(MEMFindContainHeap,                    LIBRARY_COREINIT, MEMFindContainHeap),
 };
 // clang-format on
 
