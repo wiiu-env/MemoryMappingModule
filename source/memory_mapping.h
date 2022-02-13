@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coreinit/memheap.h>
 #include <cstddef>
 
 #ifdef __cplusplus
@@ -205,6 +206,8 @@ void *MemoryMapping_alloc(uint32_t size, int32_t align);
 void *MemoryMapping_allocVideoMemory(uint32_t size, int32_t align);
 
 void MemoryMapping_free(void *ptr);
+
+MEMHeapHandle MemoryMapping_MEMFindContainHeap(void *block);
 
 uint32_t MemoryMapping_getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize);
 
