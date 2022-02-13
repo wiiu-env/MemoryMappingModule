@@ -1,15 +1,11 @@
 #include "memory_mapping.h"
 #include <coreinit/cache.h>
-#include <coreinit/memblockheap.h>
-#include <coreinit/memdefaultheap.h>
 #include <coreinit/memexpheap.h>
-#include <coreinit/memlist.h>
 #include <coreinit/memorymap.h>
 #include <coreinit/thread.h>
 
 #include "CThread.h"
 #include "logger.h"
-#include "memory.h"
 #include <coreinit/mutex.h>
 #include <cstring>
 #include <vector>
@@ -413,7 +409,15 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
             continue;
         }
 
-        res = MEMAllocFromExpHeapEx(heapHandle, (size + align - 1) & ~(align - 1), align);
+        uint32_t allocSize;
+        if (align > 0) {
+            allocSize = (size + align - 1) & ~(align - 1);
+        } else {
+            uint32_t alignAbs = -align;
+            allocSize         = (size + alignAbs - 1) & ~(alignAbs - 1);
+        }
+
+        res = MEMAllocFromExpHeapEx(heapHandle, allocSize, align);
         if (res != nullptr) {
             break;
         }
