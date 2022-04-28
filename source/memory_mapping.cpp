@@ -26,10 +26,15 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
 void writeKernelNOPs(CThread *thread, void *arg) {
     DEBUG_FUNCTION_LINE_VERBOSE("Writing kernel NOPs on core %d", OSGetThreadAffinity(OSGetCurrentThread()) / 2);
 
-    // Patch out any writes to SR8
-    KernelNOPAtPhysicalAddress(0xFFF1D754);
-    KernelNOPAtPhysicalAddress(0xFFF1D64C);
-    KernelNOPAtPhysicalAddress(0xFFE00638);
+    // Patch out any writes to SR
+    int sr = MEMORY_START_BASE >> 28;
+    KernelNOPAtPhysicalAddress(0xfff1d734 + 0x4 * sr);
+    if (sr < 7) {
+        KernelNOPAtPhysicalAddress(0xfff1d604 + 0x4 * sr);
+    } else {
+        KernelNOPAtPhysicalAddress(0xfff1d648 + 0x4 * (sr - 7));
+    }
+    KernelNOPAtPhysicalAddress(0xffe00618 + 0x4 * sr);
 
     // nop out branches to app panic 0x17
     KernelNOPAtPhysicalAddress(0xfff01db0);
