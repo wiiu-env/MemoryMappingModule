@@ -87,7 +87,7 @@ function_replacement_data_t function_replacements[] __attribute__((section(".dat
         REPLACE_FUNCTION_VIA_ADDRESS(KiIsEffectiveRangeValid,               0xffee0d6c, 0xffee0d6c),
         REPLACE_FUNCTION_VIA_ADDRESS(IPCKDriver_ValidatePhysicalAddress,    0xfff0cb5c, 0xfff0cb5c),
         REPLACE_FUNCTION_VIA_ADDRESS(KiGetOrPutUserData,                    0xffee0794, 0xffee0794),
-        REPLACE_FUNCTION(MEMFindContainHeap,                    LIBRARY_COREINIT, MEMFindContainHeap),
+        REPLACE_FUNCTION(MEMFindContainHeap,                                LIBRARY_COREINIT, MEMFindContainHeap),
 };
 // clang-format on
 
