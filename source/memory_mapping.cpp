@@ -535,7 +535,7 @@ void MemoryMapping_CreateHeaps() {
 #ifdef DEBUG
         auto heap =
 #endif
-        MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
+                MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
 #ifdef DEBUG
         DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", heap, size / 1024);
 #endif
