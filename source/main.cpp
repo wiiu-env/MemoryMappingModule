@@ -1,8 +1,11 @@
 #include "function_replacements.h"
-#include "logger.h"
 #include "memory_mapping.h"
+#include <coreinit/debug.h>
 #include <function_patcher/function_patching.h>
 #include <wums.h>
+#ifdef DEBUG
+#include "logger.h"
+#endif
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
@@ -13,11 +16,16 @@ WUMS_INITIALIZE(args) {
     if (!ucSetupRequired) {
         return;
     }
+
     ucSetupRequired = 0;
     MemoryMapping_setupMemoryMapping();
     MemoryMapping_CreateHeaps();
 
-    FunctionPatcherPatchFunction(function_replacements, function_replacements_size);
+    for (uint32_t i = 0; i < function_replacements_size; i++) {
+        if (!FunctionPatcherPatchFunction(&function_replacements[i], nullptr)) {
+            OSFatal("homebrew_memorymapping: Failed to patch function");
+        }
+    }
 }
 
 #ifdef DEBUG
