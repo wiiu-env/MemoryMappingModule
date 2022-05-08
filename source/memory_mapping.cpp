@@ -109,6 +109,7 @@ bool MemoryMapping_isMemoryMapped() {
 }
 
 void MemoryMapping_searchEmptyMemoryRegions() {
+#ifdef DEBUG
     DEBUG_FUNCTION_LINE("Searching for empty memory.");
 
     for (int32_t i = 0;; i++) {
@@ -181,6 +182,7 @@ void MemoryMapping_searchEmptyMemoryRegions() {
         }
     }
     DEBUG_FUNCTION_LINE("All tests done.");
+#endif
 }
 
 void MemoryMapping_writeTestValuesToMemory() {
@@ -233,6 +235,7 @@ void MemoryMapping_writeTestValuesToMemory() {
 }
 
 void MemoryMapping_readTestValuesFromMemory() {
+#ifdef DEBUG
     DEBUG_FUNCTION_LINE("Testing reading the written values.");
 
     for (int32_t i = 0;; i++) {
@@ -295,6 +298,7 @@ void MemoryMapping_readTestValuesFromMemory() {
         }
     }
     DEBUG_FUNCTION_LINE("All tests done.");
+#endif
 }
 
 void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mapping, sr_table_t SRTable, uint32_t *translation_table) {
@@ -407,7 +411,6 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
         }
         uint32_t effectiveAddress = mem_mapping[i].effective_start_address;
         auto heapHandle           = (MEMHeapHandle) effectiveAddress;
-        auto *heap                = (MEMExpHeap *) heapHandle;
 
         // Skip non-video memory
         if (videoOnly && ((effectiveAddress < MEMORY_START_VIDEO) || (effectiveAddress > MEMORY_END_VIDEO))) {
@@ -475,10 +478,7 @@ void MemoryMapping_free(void *ptr) {
         }
         if (ptr_val > mem_mapping[i].effective_start_address && ptr_val < mem_mapping[i].effective_end_address) {
             auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
-            auto *heap      = (MEMExpHeap *) heapHandle;
-
-            MEMFreeToExpHeap((MEMHeapHandle) mem_mapping[i].effective_start_address, ptr);
-            auto cur = heap->usedList.head;
+            MEMFreeToExpHeap(heapHandle, ptr);
             break;
         }
     }
@@ -532,8 +532,13 @@ void MemoryMapping_CreateHeaps() {
         uint32_t size = mem_mapping[i].effective_end_address - mem_mapping[i].effective_start_address;
 
         memset(reinterpret_cast<void *>(mem_mapping[i].effective_start_address), 0, size);
-        auto heap = MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
+#ifdef DEBUG
+        auto heap =
+#endif
+        MEMCreateExpHeapEx(address, size, MEM_HEAP_FLAG_USE_LOCK);
+#ifdef DEBUG
         DEBUG_FUNCTION_LINE("Created heap @%08X, size %d KiB", heap, size / 1024);
+#endif
     }
     OSUnlockMutex(&allocMutex);
 }
@@ -741,6 +746,7 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
         }
     }
 
+#ifdef VERBOSE_DEBUG
     const char *access1[] = {"read/write", "read/write", "read/write", "read only"};
     const char *access2[] = {"no access", "read only", "read/write", "read only"};
 
@@ -749,6 +755,7 @@ void MemoryMapping_printPageTableTranslation(sr_table_t srTable, uint32_t *trans
                                     cur.kp ? access2[cur.pp] : access1[cur.pp],
                                     cur.ks ? access2[cur.pp] : access1[cur.pp], cur.nx ? "not executable" : "executable");
     }
+#endif
 }
 
 
