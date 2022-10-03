@@ -11,7 +11,7 @@ DECL_FUNCTION(uint32_t, KiEffectiveToPhysical, uint32_t addressSpace, uint32_t v
 }
 
 DECL_FUNCTION(int32_t, sCheckDataRange, uint32_t address, uint32_t maxDataSize) {
-    if ((address & 0xF0000000) == (MEMORY_START_BASE & 0xF0000000)) {
+    if ((address >= 0x00800000 && address < 0x01000000) || (address & 0xF0000000) == (MEMORY_START_BASE & 0xF0000000)) {
         return 1;
     }
 
