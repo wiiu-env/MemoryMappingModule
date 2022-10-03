@@ -78,8 +78,23 @@ DECL_FUNCTION(MEMHeapHandle, MEMFindContainHeap, void *block) {
     return result;
 }
 
+DECL_FUNCTION(int32_t, LiValidateAddress, void *ptr,
+              uint32_t size,
+              uint32_t alignMask,
+              int32_t errorCode,
+              void *minAddr,
+              void *maxAddr,
+              const char *name) {
+    if (((uint32_t) ptr >= 0x00800000 && (uint32_t) ptr < 0x01000000) || ((uint32_t) ptr & 0xF0000000) == (MEMORY_START_BASE & 0xF0000000)) {
+        return 0;
+    }
+
+    return real_LiValidateAddress(ptr, size, alignMask, errorCode, minAddr, maxAddr, name);
+}
+
 // clang-format off
 function_replacement_data_t function_replacements[] __attribute__((section(".data"))) = {
+        REPLACE_FUNCTION_VIA_ADDRESS(LiValidateAddress,                     0x32008904, 0x01008904),
         REPLACE_FUNCTION_VIA_ADDRESS(sCheckDataRange,                       0x3200cf60, 0x0100cf60),
         REPLACE_FUNCTION_VIA_ADDRESS(KiEffectiveToPhysical,                 0xffee0aac, 0xffee0aac),
         REPLACE_FUNCTION_VIA_ADDRESS(KiPhysicalToEffectiveCached,           0xffee0a3c, 0xffee0a3c),
