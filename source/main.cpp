@@ -1,11 +1,14 @@
 #include "function_replacements.h"
 #include "memory_mapping.h"
+#include "version.h"
 #include <coreinit/debug.h>
 #include <function_patcher/function_patching.h>
 #include <wums.h>
 #ifdef DEBUG
 #include "logger.h"
 #endif
+
+#define VERSION "v0.1"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
@@ -28,11 +31,15 @@ WUMS_INITIALIZE(args) {
     }
 }
 
-#ifdef DEBUG
+
 WUMS_APPLICATION_STARTS() {
+    OSReport("Running MemoryMappingModule " VERSION VERSION_EXTRA "\n");
+#ifdef DEBUG
     initLogging();
+#endif
 }
 
+#ifdef DEBUG
 WUMS_APPLICATION_REQUESTS_EXIT() {
     deinitLogging();
 }
