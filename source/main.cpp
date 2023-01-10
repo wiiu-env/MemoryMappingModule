@@ -13,6 +13,8 @@
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
 WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
+WUMS_DEPENDS_ON(homebrew_kernel);
+WUMS_DEPENDS_ON(homebrew_functionpatcher);
 
 // We can't use the functions from libfunctionpatcher. Defined in functionpatcher.def
 extern "C" FunctionPatcherStatus FPAddFunctionPatch(function_replacement_data_t *function_data, PatchedFunctionHandle *outHandle, bool *outHasBeenPatched);
