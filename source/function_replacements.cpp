@@ -10,6 +10,23 @@ DECL_FUNCTION(uint32_t, KiEffectiveToPhysical, uint32_t addressSpace, uint32_t v
     return result;
 }
 
+
+DECL_FUNCTION(int32_t, KiValidateUserDataRange, uint32_t address, uint32_t size) {
+    if ((address >= 0x00800000 && address < 0x01000000) || (address & 0xF0000000) == (MEMORY_START_BASE & 0xF0000000)) {
+        return 1;
+    }
+
+    return real_KiValidateUserDataRange(address, size);
+}
+
+DECL_FUNCTION(int32_t, KiValidateUserCodeRange, uint32_t address, uint32_t size) {
+    if ((address >= 0x00800000 && address < 0x01000000) || (address & 0xF0000000) == (MEMORY_START_BASE & 0xF0000000)) {
+        return 1;
+    }
+
+    return real_KiValidateUserCodeRange(address, size);
+}
+
 DECL_FUNCTION(int32_t, sCheckDataRange, uint32_t address, uint32_t maxDataSize) {
     if ((address >= 0x00800000 && address < 0x01000000) || (address & 0xF0000000) == (MEMORY_START_BASE & 0xF0000000)) {
         return 1;
@@ -106,6 +123,8 @@ function_replacement_data_t function_replacements[] __attribute__((section(".dat
         REPLACE_FUNCTION_VIA_ADDRESS(KiPhysicalToEffectiveUncached,         0xffee0a80, 0xffee0a80),
         REPLACE_FUNCTION_VIA_ADDRESS(KiIsEffectiveRangeValid,               0xffee0d6c, 0xffee0d6c),
         REPLACE_FUNCTION_VIA_ADDRESS(IPCKDriver_ValidatePhysicalAddress,    0xfff0cb5c, 0xfff0cb5c),
+        REPLACE_FUNCTION_VIA_ADDRESS(KiValidateUserDataRange,               0xffee10cc, 0xffee10cc),
+        REPLACE_FUNCTION_VIA_ADDRESS(KiValidateUserCodeRange,               0xffee1074, 0xffee1074),
         REPLACE_FUNCTION_VIA_ADDRESS(KiGetOrPutUserData,                    0xffee0794, 0xffee0794),
         REPLACE_FUNCTION(MEMFindContainHeap,                                LIBRARY_COREINIT, MEMFindContainHeap),
 };
