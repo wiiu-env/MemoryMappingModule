@@ -56,17 +56,22 @@ DECL_FUNCTION(uint32_t, KiIsEffectiveRangeValid, uint32_t addressSpace, uint32_t
 // clang-format on
 
 DECL_FUNCTION(uint32_t, KiGetOrPutUserData, void *src, uint32_t size, void *dst, bool isRead) {
-    //
-    if (isRead && MemoryMapping_EffectiveToPhysical((uint32_t) src) > 0) {
-        k_memcpy(dst, src, size);
-        return 1;
-    } else if (!isRead && MemoryMapping_EffectiveToPhysical((uint32_t) dst) > 0) {
-        // src and dst are swapped here
-        k_memcpy(src, dst, size);
+    if (real_KiGetOrPutUserData(src, size, dst, isRead)) {
         return 1;
     }
 
-    return real_KiGetOrPutUserData(src, size, dst, isRead);
+    // check if the src (src is the destication for writes) buffer is valid
+    if (MemoryMapping_EffectiveToPhysical((uint32_t) src) == 0) {
+        return 0;
+    }
+
+    if (isRead) {
+        k_memcpy(dst, src, size);
+    } else if (!isRead && MemoryMapping_EffectiveToPhysical((uint32_t) src) > 0) {
+        // src and dst are swapped here
+        k_memcpy(src, dst, size);
+    }
+    return 1;
 }
 
 DECL_FUNCTION(MEMHeapHandle, MEMFindContainHeap, void *block) {
