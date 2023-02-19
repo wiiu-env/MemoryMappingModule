@@ -8,7 +8,7 @@
 #include "logger.h"
 #endif
 
-#define VERSION "v0.2.1"
+#define VERSION "v0.2.2"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
