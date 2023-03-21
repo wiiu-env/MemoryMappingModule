@@ -42,12 +42,12 @@ typedef struct _memory_mapping_t {
 
 // clang-format off
 const memory_values_t mem_vals_heap_1[] = {
-        {0x28000000 + 0x06620000, 0x28000000 + 0x07F80000}, // size: 25984 kB
+        {0x28000000 + 0x06620000 + 0x2A0000, 0x28000000 + 0x07F80000}, // size: 23296 kB
         {0,                       0}
 };
 // clang-format on
 
-#define MEMORY_HEAP0_SIZE       0x1960000
+#define MEMORY_HEAP0_SIZE       0x16C0000
 #define MEMORY_HEAP0            MEMORY_START_BASE
 
 // clang-format off
