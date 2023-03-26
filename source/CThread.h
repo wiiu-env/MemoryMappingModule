@@ -16,8 +16,10 @@
  ****************************************************************************/
 #pragma once
 
+#include "globals.h"
 #include <coreinit/thread.h>
 #include <cstdint>
+#include <cstring>
 #include <malloc.h>
 #include <unistd.h>
 
@@ -26,14 +28,15 @@ public:
     typedef void (*Callback)(CThread *thread, void *arg);
 
     //! constructor
-    explicit CThread(int32_t iAttr, int32_t iPriority = 16, int32_t iStackSize = 0x8000, CThread::Callback callback = nullptr, void *callbackArg = nullptr)
+    explicit CThread(int32_t iAttr, int32_t iPriority = 16, int32_t stacksize = 0x8000, CThread::Callback callback = nullptr, void *callbackArg = nullptr)
         : pThread(nullptr), pThreadStack(nullptr), pCallback(callback), pCallbackArg(callbackArg) {
         //! save attribute assignment
         iAttributes = iAttr;
-        //! allocate the thread
-        pThread = (OSThread *) memalign(8, 0x1000);
-        //! allocate the stack
-        pThreadStack = (uint8_t *) memalign(0x20, iStackSize);
+        iStackSize  = stacksize;
+        //! allocate the thread on the default Cafe OS heap
+        pThread = (OSThread *) gMEMAllocFromDefaultHeapExForThreads(sizeof(OSThread), 0x10);
+        //! allocate the stack on the default Cafe OS heap
+        pThreadStack = (uint8_t *) gMEMAllocFromDefaultHeapExForThreads(iStackSize, 0x20);
         //! create the thread
         if (pThread && pThreadStack) {
             // clang-format off
@@ -71,7 +74,9 @@ public:
     //! Resume thread
     virtual void resumeThread() {
         if (!isThreadSuspended()) return;
-        if (pThread) OSResumeThread(pThread);
+        if (pThread) {
+            OSResumeThread(pThread);
+        }
     }
 
     //! Set thread priority
@@ -111,12 +116,16 @@ public:
             }
             OSJoinThread(pThread, nullptr);
         }
+        // Some games (e.g. Minecraft) expect the default heap to be empty.
+        // Make sure to clean up the memory after using it
         //! free the thread stack buffer
         if (pThreadStack) {
-            free(pThreadStack);
+            memset(pThreadStack, 0, iStackSize);
+            gMEMFreeToDefaultHeapForThreads(pThreadStack);
         }
         if (pThread) {
-            free(pThread);
+            memset(pThread, 0, sizeof(OSThread));
+            gMEMFreeToDefaultHeapForThreads(pThread);
         }
         pThread      = nullptr;
         pThreadStack = nullptr;
@@ -139,6 +148,7 @@ private:
         return 0;
     }
 
+    uint32_t iStackSize;
     int32_t iAttributes;
     OSThread *pThread;
     uint8_t *pThreadStack;
