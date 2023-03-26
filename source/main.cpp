@@ -1,4 +1,6 @@
 #include "function_replacements.h"
+#include "globals.h"
+#include "logger.h"
 #include "memory_mapping.h"
 #include "version.h"
 #include <coreinit/debug.h>
@@ -16,14 +18,44 @@ WUMS_MODULE_INIT_BEFORE_RELOCATION_DONE_HOOK();
 WUMS_DEPENDS_ON(homebrew_kernel);
 WUMS_DEPENDS_ON(homebrew_functionpatcher);
 
+#include <coreinit/dynload.h>
+#include <coreinit/memdefaultheap.h>
+
 // We can't use the functions from libfunctionpatcher. Defined in functionpatcher.def
 extern "C" FunctionPatcherStatus FPAddFunctionPatch(function_replacement_data_t *function_data, PatchedFunctionHandle *outHandle, bool *outHasBeenPatched);
+
+void UpdateFunctionPointer() {
+    // We need the real MEMAllocFromDefaultHeapEx/MEMFreeToDefaultHeap function pointer to force-allocate memory on the default heap.
+    // Our custom heap doesn't work (yet) for threads and causes an app panic.
+    OSDynLoad_Module coreinitModule;
+    if (OSDynLoad_Acquire("coreinit", &coreinitModule) != OS_DYNLOAD_OK) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to acquire coreinit.rpl");
+        OSFatal("FunctionPatcherModule: Failed to acquire coreinit.rpl");
+    }
+    /* Memory allocation functions */
+    uint32_t *allocPtr, *freePtr;
+    if (OSDynLoad_FindExport(coreinitModule, OS_DYNLOAD_EXPORT_DATA, "MEMAllocFromDefaultHeapEx", reinterpret_cast<void **>(&allocPtr)) != OS_DYNLOAD_OK) {
+        DEBUG_FUNCTION_LINE_ERR("OSDynLoad_FindExport for MEMAllocFromDefaultHeapEx");
+        OSFatal("MemoryMappingModule: OSDynLoad_FindExport for MEMAllocFromDefaultHeapEx");
+    }
+    if (OSDynLoad_FindExport(coreinitModule, OS_DYNLOAD_EXPORT_DATA, "MEMFreeToDefaultHeap", reinterpret_cast<void **>(&freePtr)) != OS_DYNLOAD_OK) {
+        DEBUG_FUNCTION_LINE_ERR("OSDynLoad_FindExport for MEMFreeToDefaultHeap");
+        OSFatal("MemoryMappingModule: OSDynLoad_FindExport for MEMFreeToDefaultHeap");
+    }
+
+    gMEMAllocFromDefaultHeapExForThreads = (void *(*) (uint32_t, int) ) * allocPtr;
+    gMEMFreeToDefaultHeapForThreads      = (void (*)(void *)) * freePtr;
+
+    OSDynLoad_Release(coreinitModule);
+}
 
 WUMS_INITIALIZE(args) {
     static uint8_t ucSetupRequired = 1;
     if (!ucSetupRequired) {
         return;
     }
+
+    UpdateFunctionPointer();
 
     ucSetupRequired = 0;
     MemoryMapping_setupMemoryMapping();
@@ -45,6 +77,11 @@ WUMS_INITIALIZE(args) {
 
 WUMS_APPLICATION_STARTS() {
     OSReport("Running MemoryMappingModule " VERSION VERSION_EXTRA "\n");
+
+    // Now we can update the pointer with the "real" functions
+    gMEMAllocFromDefaultHeapExForThreads = MEMAllocFromDefaultHeapEx;
+    gMEMFreeToDefaultHeapForThreads      = MEMFreeToDefaultHeap;
+
 #ifdef DEBUG
     initLogging();
 #endif
