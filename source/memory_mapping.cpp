@@ -346,13 +346,18 @@ void MemoryMapping_setupMemoryMapping() {
     //runOnAllCores(readAndPrintSegmentRegister,nullptr,0,16,0x80000);
 
     sr_table_t srTableCpy;
-    uint32_t pageTableCpy[0x8000];
+
+    uint32_t sizePageTable = sizeof(uint32_t) * 0x8000;
+    auto *pageTableCpy     = (uint32_t *) gMEMAllocFromDefaultHeapExForThreads(sizePageTable, 0x10);
+    if (!pageTableCpy) {
+        OSFatal("MemoryMappingModule: Failed to alloc memory for page table");
+    }
 
     KernelReadSRs(&srTableCpy);
-    KernelReadPTE((uint32_t) pageTableCpy, sizeof(pageTableCpy));
+    KernelReadPTE((uint32_t) pageTableCpy, sizePageTable);
 
     DCFlushRange(&srTableCpy, sizeof(srTableCpy));
-    DCFlushRange(pageTableCpy, sizeof(pageTableCpy));
+    DCFlushRange(pageTableCpy, sizePageTable);
 
     for (int32_t i = 0; i < 16; i++) {
         DEBUG_FUNCTION_LINE_VERBOSE("SR[%d]=%08X", i, srTableCpy.value[i]);
@@ -384,9 +389,9 @@ void MemoryMapping_setupMemoryMapping() {
     //printPageTableTranslation(srTableCpy,pageTableCpy);
 
     DEBUG_FUNCTION_LINE_VERBOSE("Writing PageTable... ");
-    DCFlushRange(pageTableCpy, sizeof(pageTableCpy));
-    KernelWritePTE((uint32_t) pageTableCpy, sizeof(pageTableCpy));
-    DCFlushRange(pageTableCpy, sizeof(pageTableCpy));
+    DCFlushRange(pageTableCpy, sizePageTable);
+    KernelWritePTE((uint32_t) pageTableCpy, sizePageTable);
+    DCFlushRange(pageTableCpy, sizePageTable);
     DEBUG_FUNCTION_LINE_VERBOSE("done");
 
     //printPageTableTranslation(srTableCpy,pageTableCpy);
@@ -400,6 +405,9 @@ void MemoryMapping_setupMemoryMapping() {
 
     //runOnAllCores(writeSegmentRegister,&srTableCpy);
     OSInitMutex(&allocMutex);
+
+    memset(pageTableCpy, 0, sizePageTable);
+    gMEMFreeToDefaultHeapForThreads(pageTableCpy);
 }
 
 void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
