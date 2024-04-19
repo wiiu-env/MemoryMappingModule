@@ -201,6 +201,8 @@ void MemoryMapping_readTestValuesFromMemory();
 
 void MemoryMapping_searchEmptyMemoryRegions();
 
+void MemoryMapping_checkHeaps();
+
 void *MemoryMapping_alloc(uint32_t size, int32_t align);
 
 void *MemoryMapping_allocVideoMemory(uint32_t size, int32_t align);
