@@ -55,6 +55,10 @@ WUMS_INITIALIZE(args) {
         return;
     }
 
+#ifdef DEBUG
+    initLogging();
+#endif
+
     UpdateFunctionPointer();
 
     ucSetupRequired = 0;
@@ -73,6 +77,10 @@ WUMS_INITIALIZE(args) {
             OSFatal("homebrew_memorymapping: Failed to patch function");
         }
     }
+
+#ifdef DEBUG
+    deinitLogging();
+#endif
 }
 
 WUMS_APPLICATION_STARTS() {
