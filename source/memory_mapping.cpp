@@ -591,8 +591,6 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
     return res;
 }
 
-extern "C" bool MEMCheckExpHeap(MEMHeapHandle heap, bool logProblems);
-
 void MemoryMapping_checkHeaps() {
     OSLockMutex(&allocMutex);
     for (int32_t i = 0; /* waiting for a break */; i++) {
@@ -600,7 +598,7 @@ void MemoryMapping_checkHeaps() {
             break;
         }
         auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
-        if (!MEMCheckExpHeap(heapHandle, true)) {
+        if (!MEMCheckExpHeap(heapHandle, MEM_EXP_HEAP_CHECK_FLAGS_LOG_ERRORS)) {
             DEBUG_FUNCTION_LINE_ERR("MemoryMapping heap %08X (index %d) is corrupted.", heapHandle, i);
 #ifdef DEBUG
             OSFatal("MemoryMappingModule: Heap is corrupted");
