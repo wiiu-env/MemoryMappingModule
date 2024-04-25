@@ -23,6 +23,149 @@ void runOnAllCores(CThread::Callback callback, void *callbackArg, int32_t iAttr 
     }
 }
 
+void KernelWriteU32(uint32_t addr, uint32_t value) {
+    ICInvalidateRange(&value, 4);
+    DCFlushRange(&value, 4);
+
+    auto dst = (uint32_t) OSEffectiveToPhysical(addr);
+    auto src = (uint32_t) OSEffectiveToPhysical((uint32_t) &value);
+
+    KernelCopyData(dst, src, 4);
+
+    DCFlushRange((void *) addr, 4);
+    ICInvalidateRange((void *) addr, 4);
+}
+
+void KernelWrite(uint32_t addr, const void *data, uint32_t length) {
+    // This is a hacky workaround, but currently it only works this way. ("data" is always on the stack, so maybe a problem with mapping values from the JIT area?)
+    // further testing required.
+    for (uint32_t i = 0; i < length; i += 4) {
+        KernelWriteU32(addr + i, *(uint32_t *) (((uint32_t) data) + i));
+    }
+}
+
+
+/*
+static void SCSetupIBAT4DBAT5() {
+    asm volatile("sync; eieio; isync");
+
+    // Give our and the kernel full execution rights.
+    // 00800000-01000000 => 30800000-31000000 (read/write, user/supervisor)
+    unsigned int ibat4u = 0x008000FF;
+    unsigned int ibat4l = 0x30800012;
+    asm volatile("mtspr 560, %0" :: "r"(ibat4u));
+    asm volatile("mtspr 561, %0" :: "r"(ibat4l));
+
+    // Give our and the kernel full data access rights.
+    // 00800000-01000000 => 30800000-31000000 (read/write, user/supervisor)
+    unsigned int dbat5u = ibat4u;
+    unsigned int dbat5l = ibat4l;
+    asm volatile("mtspr 570, %0" :: "r"(dbat5u));
+    asm volatile("mtspr 571, %0" :: "r"(dbat5l));
+
+    asm volatile("eieio; isync");
+}
+*/
+const uint32_t sSCSetupIBAT4DBAT5Buffer[] = {0x7c0004ac,
+                                             0x7c0006ac,
+                                             0x4c00012c,
+                                             0x3d400080,
+                                             0x614a00ff,
+                                             0x7d508ba6,
+                                             0x3d203080,
+                                             0x61290012,
+                                             0x7d318ba6,
+                                             0x7d5a8ba6,
+                                             0x7d3b8ba6,
+                                             0x7c0006ac,
+                                             0x4c00012c,
+                                             0x4e800020};
+
+#define TARGET_ADDRESS_EXECUTABLE_MEM 0x017FF000
+#define SCSetupIBAT4DBAT5_ADDRESS     TARGET_ADDRESS_EXECUTABLE_MEM
+
+const uint32_t sSC0x51Buffer[] = {
+        0x7c7082a6,                                        // mfspr r3, 528
+        0x60630003,                                        // ori r3, r3, 0x03
+        0x7c7083a6,                                        // mtspr 528, r3
+        0x7c7282a6,                                        // mfspr r3, 530
+        0x60630003,                                        // ori r3, r3, 0x03
+        0x7c7283a6,                                        // mtspr 530, r3
+        0x7c0006ac,                                        // eieio
+        0x4c00012c,                                        // isync
+        0x3c600000 | (SCSetupIBAT4DBAT5_ADDRESS >> 16),    // lis r3, SCSetupIBAT4DBAT5@h
+        0x60630000 | (SCSetupIBAT4DBAT5_ADDRESS & 0xFFFF), // ori r3, r3, SCSetupIBAT4DBAT5@l
+        0x7c6903a6,                                        // mtctr   r3
+        0x4e800420,                                        // bctr
+};
+
+#define SC0x51Buffer_ADDRESS (SCSetupIBAT4DBAT5_ADDRESS + sizeof(sSCSetupIBAT4DBAT5Buffer))
+#define SC0x51Call_ADDRESS   (SC0x51Buffer_ADDRESS + sizeof(sSC0x51Buffer))
+
+const uint32_t sSC0x51CallBuffer[] = {
+        0x38005100, //li %r0, 0x5100
+        0x44000002, // sc
+        0x4e800020  //blr
+};
+
+void SetupIBAT4DBAT5OnAllCores() {
+    unsigned char backupBuffer[0x74];
+    KernelWrite((uint32_t) backupBuffer, (void *) TARGET_ADDRESS_EXECUTABLE_MEM, sizeof(backupBuffer));
+
+    static_assert(sizeof(backupBuffer) >= (sizeof(sSC0x51Buffer) + sizeof(sSCSetupIBAT4DBAT5Buffer) + sizeof(sSC0x51CallBuffer)), "Not enough memory in backup buffer");
+    static_assert(SCSetupIBAT4DBAT5_ADDRESS >= TARGET_ADDRESS_EXECUTABLE_MEM && SCSetupIBAT4DBAT5_ADDRESS < (TARGET_ADDRESS_EXECUTABLE_MEM + sizeof(backupBuffer)), "buffer in wrong memory region");
+    static_assert(SC0x51Buffer_ADDRESS >= TARGET_ADDRESS_EXECUTABLE_MEM && SC0x51Buffer_ADDRESS < (TARGET_ADDRESS_EXECUTABLE_MEM + sizeof(backupBuffer)), "buffer in wrong memory region");
+    static_assert(SC0x51Call_ADDRESS >= TARGET_ADDRESS_EXECUTABLE_MEM && SC0x51Call_ADDRESS < (TARGET_ADDRESS_EXECUTABLE_MEM + sizeof(backupBuffer)), "buffer in wrong memory region");
+    static_assert(SCSetupIBAT4DBAT5_ADDRESS != SC0x51Buffer_ADDRESS && SCSetupIBAT4DBAT5_ADDRESS != SC0x51Call_ADDRESS && SC0x51Buffer_ADDRESS != SC0x51Call_ADDRESS, "buffer are not different");
+
+    // We need copy the functions to a memory region which is executable on all 3 cores
+    KernelWrite(SCSetupIBAT4DBAT5_ADDRESS, sSCSetupIBAT4DBAT5Buffer, sizeof(sSCSetupIBAT4DBAT5Buffer)); // Set IBAT5 and DBAT5 to map the memory region
+    KernelWrite(SC0x51Buffer_ADDRESS, sSC0x51Buffer, sizeof(sSC0x51Buffer));                            // Implementation of 0x51 syscall
+    KernelWrite(SC0x51Call_ADDRESS, sSC0x51CallBuffer, sizeof(sSC0x51CallBuffer));                      // Call of 0x51 syscall
+
+    /* set our setup syscall to an unused position */
+    KernelPatchSyscall(0x51, SCSetupIBAT4DBAT5_ADDRESS);
+
+    // We want to run this on all 3 cores.
+    {
+        int32_t aff[] = {CThread::eAttributeAffCore2, CThread::eAttributeAffCore1, CThread::eAttributeAffCore0};
+
+        int iStackSize = 0x200;
+
+        //! allocate the thread and stack on the default Cafe OS heap
+        auto *pThread      = (OSThread *) gMEMAllocFromDefaultHeapExForThreads(sizeof(OSThread), 0x10);
+        auto *pThreadStack = (uint8_t *) gMEMAllocFromDefaultHeapExForThreads(iStackSize, 0x20);
+        //! create the thread
+        if (pThread && pThreadStack) {
+            for (int i : aff) {
+                *pThread = {};
+                memset(pThreadStack, 0, iStackSize);
+                OSCreateThread(pThread, reinterpret_cast<OSThreadEntryPointFn>(SC0x51Call_ADDRESS), 0, nullptr, (void *) (pThreadStack + iStackSize), iStackSize, 16, (OSThreadAttributes) i);
+                OSResumeThread(pThread);
+
+                while (OSIsThreadSuspended(pThread)) {
+                    OSResumeThread(pThread);
+                }
+                OSJoinThread(pThread, nullptr);
+            }
+        }
+
+        //! free the thread stack buffer
+        if (pThreadStack) {
+            memset(pThreadStack, 0, iStackSize);
+            gMEMFreeToDefaultHeapForThreads(pThreadStack);
+        }
+        if (pThread) {
+            memset(pThread, 0, sizeof(OSThread));
+            gMEMFreeToDefaultHeapForThreads(pThread);
+        }
+    }
+
+    /* repair data */
+    KernelWrite(TARGET_ADDRESS_EXECUTABLE_MEM, backupBuffer, sizeof(backupBuffer));
+    DCFlushRange((void *) TARGET_ADDRESS_EXECUTABLE_MEM, sizeof(backupBuffer));
+}
+
 void writeKernelNOPs(CThread *thread, void *arg) {
     DEBUG_FUNCTION_LINE_VERBOSE("Writing kernel NOPs on core %d", OSGetThreadAffinity(OSGetCurrentThread()) / 2);
 
@@ -339,6 +482,11 @@ void MemoryMapping_memoryMappingForRegions(const memory_mapping_t *memory_mappin
 }
 
 void MemoryMapping_setupMemoryMapping() {
+    /*
+     * We need to make sure that with have full access to the 0x0080000-0x01000000 region on all 3 cores.
+     */
+    SetupIBAT4DBAT5OnAllCores();
+
     // Override all writes to SR8 with nops.
     // Override some memory region checks inside the kernel
     runOnAllCores(writeKernelNOPs, nullptr);
@@ -441,6 +589,23 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
     OSMemoryBarrier();
     OSUnlockMutex(&allocMutex);
     return res;
+}
+
+void MemoryMapping_checkHeaps() {
+    OSLockMutex(&allocMutex);
+    for (int32_t i = 0; /* waiting for a break */; i++) {
+        if (mem_mapping[i].physical_addresses == nullptr) {
+            break;
+        }
+        auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
+        if (!MEMCheckExpHeap(heapHandle, MEM_EXP_HEAP_CHECK_FLAGS_LOG_ERRORS)) {
+            DEBUG_FUNCTION_LINE_ERR("MemoryMapping heap %08X (index %d) is corrupted.", heapHandle, i);
+#ifdef DEBUG
+            OSFatal("MemoryMappingModule: Heap is corrupted");
+#endif
+        }
+    }
+    OSUnlockMutex(&allocMutex);
 }
 
 void *MemoryMapping_alloc(uint32_t size, int32_t align) {

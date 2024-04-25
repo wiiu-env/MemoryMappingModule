@@ -10,7 +10,7 @@
 #include "logger.h"
 #endif
 
-#define VERSION "v0.2.5"
+#define VERSION "v0.2.6"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_memorymapping");
 WUMS_MODULE_SKIP_INIT_FINI();
@@ -45,8 +45,6 @@ void UpdateFunctionPointer() {
 
     gMEMAllocFromDefaultHeapExForThreads = (void *(*) (uint32_t, int) ) * allocPtr;
     gMEMFreeToDefaultHeapForThreads      = (void (*)(void *)) * freePtr;
-
-    OSDynLoad_Release(coreinitModule);
 }
 
 WUMS_INITIALIZE(args) {
@@ -54,6 +52,10 @@ WUMS_INITIALIZE(args) {
     if (!ucSetupRequired) {
         return;
     }
+
+#ifdef DEBUG
+    initLogging();
+#endif
 
     UpdateFunctionPointer();
 
@@ -73,10 +75,16 @@ WUMS_INITIALIZE(args) {
             OSFatal("homebrew_memorymapping: Failed to patch function");
         }
     }
+
+#ifdef DEBUG
+    deinitLogging();
+#endif
 }
 
 WUMS_APPLICATION_STARTS() {
     OSReport("Running MemoryMappingModule " VERSION VERSION_EXTRA "\n");
+
+    MemoryMapping_checkHeaps();
 
     // Now we can update the pointer with the "real" functions
     gMEMAllocFromDefaultHeapExForThreads = MEMAllocFromDefaultHeapEx;
@@ -87,11 +95,14 @@ WUMS_APPLICATION_STARTS() {
 #endif
 }
 
+
+WUMS_APPLICATION_ENDS() {
+    MemoryMapping_checkHeaps();
 #ifdef DEBUG
-WUMS_APPLICATION_REQUESTS_EXIT() {
     deinitLogging();
-}
 #endif
+}
+
 
 void MemoryMappingFree(void *ptr) {
     //DEBUG_FUNCTION_LINE("[%08X] free", ptr);
