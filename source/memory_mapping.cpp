@@ -591,6 +591,73 @@ void *MemoryMapping_allocEx(uint32_t size, int32_t align, bool videoOnly) {
     return res;
 }
 
+bool CheckMemExpHeapBlock(MEMExpHeap *heap, MEMExpHeapBlockList *block, uint32_t tag, const char *listName, uint32_t &totalSizeOut) {
+    MEMExpHeapBlock *prevBlock = nullptr;
+    for (auto *cur = block->head; cur != nullptr; cur = cur->next) {
+        if (cur->prev != prevBlock) {
+            DEBUG_FUNCTION_LINE_ERR("[Exp Heap Check] \"%s\" prev is invalid. expected %08X actual %08X", listName, prevBlock, cur->prev);
+            return false;
+        }
+        if (cur < heap->header.dataStart || cur > heap->header.dataEnd || ((uint32_t) cur + sizeof(MEMExpHeapBlock) + cur->blockSize) > (uint32_t) heap->header.dataEnd) {
+            DEBUG_FUNCTION_LINE_ERR("[Exp Heap Check] Block is not inside heap. block: %08X size %d; heap start %08X heap end %08X", cur, sizeof(MEMExpHeapBlock) + cur->blockSize, heap->header.dataStart, heap->header.dataEnd);
+            return false;
+        }
+        if (cur->tag != tag) {
+            DEBUG_FUNCTION_LINE_ERR("[Exp Heap Check] Invalid block tag expected %04X, actual %04X", tag, cur->tag);
+            return false;
+        }
+
+        totalSizeOut = totalSizeOut + cur->blockSize + (cur->attribs >> 8 & 0x7fffff) + sizeof(MEMExpHeapBlock);
+        prevBlock    = cur;
+    }
+    if (prevBlock != block->tail) {
+        DEBUG_FUNCTION_LINE_ERR("[Exp Heap Check] \"%s\" tail is unexpected! expected %08X, actual %08X", listName, heap->usedList.tail, prevBlock);
+        return false;
+    }
+    return true;
+}
+
+bool CheckMemExpHeapCore(MEMExpHeap *heap) {
+    uint32_t totalSize = 0;
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+    if (!CheckMemExpHeapBlock(heap, &heap->usedList, 0x5544, "used", totalSize)) {
+        return false;
+    }
+
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+    if (!CheckMemExpHeapBlock(heap, &heap->freeList, 0x4652, "free", totalSize)) {
+        return false;
+    }
+
+    if (totalSize != (uint32_t) heap->header.dataEnd - (uint32_t) heap->header.dataStart) {
+        DEBUG_FUNCTION_LINE_ERR("[Exp Heap Check] heap size is unexpected! expected %08X, actual %08X", (uint32_t) heap->header.dataEnd - (uint32_t) heap->header.dataStart, totalSize);
+        return false;
+    }
+    return true;
+}
+
+bool CheckMemExpHeap(MEMExpHeap *heap) {
+    OSMemoryBarrier();
+    if (heap->header.tag != MEM_EXPANDED_HEAP_TAG) {
+        DEBUG_FUNCTION_LINE_ERR("[Exp Heap Check] Invalid heap handle. - %08X", heap->header.tag);
+        return false;
+    }
+
+    if (heap->header.flags & MEM_HEAP_FLAG_USE_LOCK) {
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+        OSUninterruptibleSpinLock_Acquire(&(heap->header).lock);
+    }
+
+    auto result = CheckMemExpHeapCore(heap);
+
+    if (heap->header.flags & MEM_HEAP_FLAG_USE_LOCK) {
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+        OSUninterruptibleSpinLock_Release(&(heap->header).lock);
+    }
+
+    return result;
+}
+
 void MemoryMapping_checkHeaps() {
     OSLockMutex(&allocMutex);
     for (int32_t i = 0; /* waiting for a break */; i++) {
@@ -598,7 +665,7 @@ void MemoryMapping_checkHeaps() {
             break;
         }
         auto heapHandle = (MEMHeapHandle) mem_mapping[i].effective_start_address;
-        if (!MEMCheckExpHeap(heapHandle, MEM_EXP_HEAP_CHECK_FLAGS_LOG_ERRORS)) {
+        if (!CheckMemExpHeap(reinterpret_cast<MEMExpHeap *>(heapHandle))) {
             DEBUG_FUNCTION_LINE_ERR("MemoryMapping heap %08X (index %d) is corrupted.", heapHandle, i);
 #ifdef DEBUG
             OSFatal("MemoryMappingModule: Heap is corrupted");
