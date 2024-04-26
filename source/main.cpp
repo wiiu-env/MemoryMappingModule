@@ -82,6 +82,9 @@ WUMS_INITIALIZE(args) {
 }
 
 WUMS_APPLICATION_STARTS() {
+#ifdef DEBUG
+    initLogging();
+#endif
     OSReport("Running MemoryMappingModule " VERSION VERSION_EXTRA "\n");
 
     MemoryMapping_checkHeaps();
@@ -89,10 +92,6 @@ WUMS_APPLICATION_STARTS() {
     // Now we can update the pointer with the "real" functions
     gMEMAllocFromDefaultHeapExForThreads = MEMAllocFromDefaultHeapEx;
     gMEMFreeToDefaultHeapForThreads      = MEMFreeToDefaultHeap;
-
-#ifdef DEBUG
-    initLogging();
-#endif
 }
 
 
