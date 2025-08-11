@@ -4,7 +4,7 @@
 1. Copy the file `MemoryMappingModule.wms` into `sd:/wiiu/environments/[ENVIRONMENT]/modules`.  
 2. Requires the [WUMSLoader](https://github.com/wiiu-env/WUMSLoader) in `sd:/wiiu/environments/[ENVIRONMENT]/modules/setup`.
 
-## Buildflags
+## Build flags
 
 ### Logging
 Building via `make` only logs errors (via OSReport). To enable logging via the [LoggingModule](https://github.com/wiiu-env/LoggingModule) set `DEBUG` to `1` or `VERBOSE`.
